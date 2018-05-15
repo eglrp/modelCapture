@@ -4,6 +4,18 @@
 
 #pragma once
 #include <memory>
+#include <vector>
+#include <string>
+#include <osg/Vec3d>
+
+struct threadPara
+{
+	double x;
+	double y;
+	double z;
+	std::string snapFile;
+};
+
 
 // CmodelCaptureDlg dialog
 class CmodelCaptureDlg : public CDialogEx
@@ -17,6 +29,9 @@ public:
 
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
+
+	void startThread(std::vector<threadPara> vecPara, std::string modelFileName,
+		int imageWidth, int imageHeight, osg::Vec3d center, osg::Vec3d up);
 
 
 // Implementation

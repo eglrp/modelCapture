@@ -12,6 +12,7 @@
 #include <osgDB/ReadFile>
 #include <osg/Node>
 #include <osg/BoundingSphere>
+#include <thread>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -19,10 +20,14 @@
 
 const int interval = 5;
 
+
 using namespace capture;
 using namespace std;
 using namespace osg;
 using namespace osgDB;
+
+
+
 
 // CAboutDlg dialog used for App About
 
@@ -220,7 +225,7 @@ void CmodelCaptureDlg::OnBnClickedloadsnapsavepath()
 void CmodelCaptureDlg::OnBnClickedImage()
 {
 	// TODO: Add your control notification handler code here
-	shared_ptr<ICapture> iCapture = ICaptureFactory::create();
+	
 	string modelFileName = mModelPath;
 	string savePath = mSnapSavePath;
 	int imageWidth = mWidth;
@@ -238,24 +243,70 @@ void CmodelCaptureDlg::OnBnClickedImage()
 	Vec3d center = bs.center();
 	Vec3d up(0, 0, 1);
 
+	struct threadFunc
+	{
+		std::vector<threadPara> vecPara;
+	};
+
+	const int threadMax = std::thread::hardware_concurrency() - 1;
+
+	vector<threadFunc> thr;
+	thr.resize(threadMax);
+
+	int totalNum = 0;
+
 	for (int t = -180; t <= 180; t = t + interval)
 	{
 		for (int p = -180; p <= 180; p = p + interval)
 		{
+			totalNum++;
 			double x = radius * sin(t / PI) * cos(p / PI) + center.x();
 			double y = radius * sin(t / PI) * sin(p / PI) + center.y();
 			double z = radius * sin(t / PI) + center.z();
 
 			string snapFile = savePath + to_string(t) + "_" + to_string(p) + ".jpg";
+			threadPara para;
+			para.x = x;
+			para.y = y;
+			para.z = z;
+			para.snapFile = snapFile;
 
-			iCapture->autoCaptureImage(modelFileName, snapFile, imageWidth, imageHeight,
-				x, y, z, center.x(), center.y(), center.z(),
-				up.x(), up.y(), up.z());
+			int groupNum = totalNum % threadMax;
+			thr[groupNum].vecPara.push_back(para);
 		}
 	}
 
+	std::vector<std::thread> vecThread;
+
+	for (auto func : thr)
+	{
+		vector<threadPara> vecPara = func.vecPara;
+		vecThread.push_back(std::thread(&CmodelCaptureDlg::startThread, this, vecPara, modelFileName, imageWidth, imageHeight, center, up));
+	}
+
+	std::for_each(vecThread.begin(), vecThread.end(),
+		std::mem_fn(&std::thread::detach));
+
+	AfxMessageBox(_T("正在生成360度截图"));
 }
 
+void CmodelCaptureDlg::startThread(vector<threadPara> vecPara, string modelFileName, 
+	int imageWidth, int imageHeight, osg::Vec3d center, osg::Vec3d up)
+{
+	shared_ptr<ICapture> iCapture = ICaptureFactory::create();
+
+	for (auto para : vecPara)
+	{
+		double x = para.x;
+		double y = para.y;
+		double z = para.z;
+		string snapFile = para.snapFile;
+
+		iCapture->autoCaptureImage(modelFileName, snapFile, imageWidth, imageHeight,
+			x, y, z, center.x(), center.y(), center.z(),
+			up.x(), up.y(), up.z());
+	}
+}
 
 void CmodelCaptureDlg::OnBnClickedPreview()
 {
@@ -265,7 +316,11 @@ void CmodelCaptureDlg::OnBnClickedPreview()
 	double radius = mR;
 	/*IViewer->showCaptureSphere(radius);*/
 
-	AfxMessageBox(_T("preview"));
+	AfxMessageBox(_T("预览开始，按esc退出"));
+
+	shared_ptr<ICapture> iCapture = ICaptureFactory::create();
+	string sceneFile = mModelPath;
+	iCapture->preview(sceneFile, radius);
 }
 
 

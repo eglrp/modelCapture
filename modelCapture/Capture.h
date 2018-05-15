@@ -1,6 +1,7 @@
 #pragma once
 #include "ICapture.h"
 #include <osg/Vec3d>
+#include <osg/Node>
 
 namespace capture
 {
@@ -24,6 +25,16 @@ namespace capture
 			double eyeX, double eyeY, double eyeZ,
 			double centerX, double centerY, double centerZ,
 			double upX, double upY, double upZ);
+
+		/*
+		** brief 预览
+		** param sceneFileName 捕捉的场景文件 全路径
+		** param radius 半径长度
+		*/
+		virtual void preview(std::string sceneFileName, double radius);
+
+	protected:
+		osg::Node* drawBaseShpere(const osg::Vec3d &center, double radius);
 
 	};
 }

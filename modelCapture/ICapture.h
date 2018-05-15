@@ -26,6 +26,9 @@ namespace capture
 			double eyeX, double eyeY, double eyeZ,  
 			double centerX, double centerY, double centerZ,
 			double upX, double upY, double upZ) = 0;
+
+
+		virtual void preview(std::string sceneFileName, double radius) = 0;
 	};
 
 
