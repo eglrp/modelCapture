@@ -29,6 +29,9 @@
 #include <sstream>
 #include <osg/Camera>
 
+#include <osg/BlendFunc>
+#include <osg/ShapeDrawable>
+
 using namespace std;
 using namespace osg;
 using namespace osgGA;
@@ -334,4 +337,49 @@ void CCapture::autoCaptureImage(std::string sceneFileName, std::string outFileNa
 		viewer.run();
 		return;
 	}
+}
+
+
+
+void CCapture::preview(std::string sceneFileName, double radius)
+{
+	osg::ref_ptr<osg::Node> node = osgDB::readNodeFile(sceneFileName);
+
+	osg::ref_ptr<osg::Group> group = new osg::Group;
+	group->addChild(node);
+
+	//»æÖÆÇòÌå
+	osg::BoundingSphere bs = node->getBound();
+	Vec3d center = bs.center();
+	osg::ref_ptr<osg::Node> sphere = drawBaseShpere(center, radius);
+	group->addChild(sphere);
+	
+	osgViewer::Viewer viewer;
+
+	viewer.setSceneData(group);
+
+	viewer.realize();
+
+	viewer.run();
+}
+
+
+
+Node* CCapture::drawBaseShpere(const osg::Vec3d &center, double radius)
+{
+	ref_ptr<Sphere> sphere = new Sphere(center, radius);
+	ref_ptr<Geode> unitSphere = new Geode;
+
+	osg::ref_ptr<osg::BlendFunc> blendFunc = new osg::BlendFunc();
+	blendFunc->setSource(osg::BlendFunc::SRC_ALPHA);
+	blendFunc->setDestination(osg::BlendFunc::ONE_MINUS_CONSTANT_ALPHA);
+
+
+	ref_ptr<osg::ShapeDrawable> shapeDrawable = new osg::ShapeDrawable(sphere.get());
+	shapeDrawable->setColor(osg::Vec4d(0, 1, 0, 0.5));
+	unitSphere->getOrCreateStateSet()->setAttributeAndModes(blendFunc);
+
+	unitSphere->addDrawable(shapeDrawable.get());
+
+	return unitSphere.release();
 }
