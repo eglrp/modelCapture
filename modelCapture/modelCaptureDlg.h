@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <osg/Vec3d>
+#include "afxwin.h"
 
 struct threadPara
 {
@@ -61,4 +62,5 @@ public:
 	int mHeight;
 
 	double mR;
+	int mInterval;
 };

@@ -30,11 +30,35 @@ namespace capture
 		** brief 预览
 		** param sceneFileName 捕捉的场景文件 全路径
 		** param radius 半径长度
+		** param interval 间距
 		*/
-		virtual void preview(std::string sceneFileName, double radius);
+		virtual void preview(std::string sceneFileName, double radius, int interval);
 
 	protected:
+		/*
+		** brief 绘制基础球体
+		** param center 球体中心
+		** param radius 半径长度
+		*/
 		osg::Node* drawBaseShpere(const osg::Vec3d &center, double radius);
+
+		/*
+		** brief 绘制相机位置
+		** param interval 间隔
+		*/
+		osg::Node* drawCameraPosition(int interval, double radius, osg::Vec3d center);
+
+		/*
+		** brief 绘制相机位置
+		** param interval 间隔
+		*/
+		osg::Geode* drawBasePoint(osg::Vec3d pt);
+
+		/*
+		** brief 创建点样式
+		** param size 点大小
+		*/
+		osg::StateSet* makePtState(int size);
 
 	};
 }

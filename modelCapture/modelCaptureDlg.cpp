@@ -18,8 +18,6 @@
 #define new DEBUG_NEW
 #endif
 
-const int interval = 5;
-
 
 using namespace capture;
 using namespace std;
@@ -83,6 +81,7 @@ void CmodelCaptureDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, ID_IMAGE_WIDTH, mWidth);
 	DDX_Text(pDX, ID_IMAGE_HEIGHT, mHeight);
 	DDX_Text(pDX, ID_RADIUS, mR);
+	DDX_Text(pDX, ID_RADIUS2, mInterval);
 }
 
 BEGIN_MESSAGE_MAP(CmodelCaptureDlg, CDialogEx)
@@ -131,6 +130,7 @@ BOOL CmodelCaptureDlg::OnInitDialog()
 	mWidth = 3000;
 	mHeight = 3000;
 	mR = 100;
+	mInterval = 45;
 
 	UpdateData(FALSE);
 
@@ -255,16 +255,24 @@ void CmodelCaptureDlg::OnBnClickedImage()
 
 	int totalNum = 0;
 
-	for (int t = -180; t <= 180; t = t + interval)
+	for (int latitude = -180; latitude <= 180; latitude = latitude + mInterval)
 	{
-		for (int p = -180; p <= 180; p = p + interval)
+		for (int longtitude = -180; longtitude <= 180; longtitude = longtitude + mInterval)
 		{
-			totalNum++;
-			double x = radius * sin(t / PI) * cos(p / PI) + center.x();
-			double y = radius * sin(t / PI) * sin(p / PI) + center.y();
-			double z = radius * sin(t / PI) + center.z();
+			double t = latitude;
+			double p = longtitude;
 
-			string snapFile = savePath + to_string(t) + "_" + to_string(p) + ".jpg";
+			if (t == 0)
+			{
+				continue;
+			}
+
+			totalNum++;
+			double x = radius * sin(t / 180 * PI) * cos(p / 180 * PI) + center.x();
+			double y = radius * sin(t / 180 * PI) * sin(p / 180 * PI) + center.y();
+			double z = radius * cos(t / 180 * PI) + center.z();
+
+			string snapFile = savePath + to_string(latitude) + "_" + to_string(longtitude) + ".jpg";
 			threadPara para;
 			para.x = x;
 			para.y = y;
@@ -302,6 +310,8 @@ void CmodelCaptureDlg::startThread(vector<threadPara> vecPara, string modelFileN
 		double z = para.z;
 		string snapFile = para.snapFile;
 
+		Vec3d up(0, 0, 1);
+
 		iCapture->autoCaptureImage(modelFileName, snapFile, imageWidth, imageHeight,
 			x, y, z, center.x(), center.y(), center.z(),
 			up.x(), up.y(), up.z());
@@ -320,7 +330,7 @@ void CmodelCaptureDlg::OnBnClickedPreview()
 
 	shared_ptr<ICapture> iCapture = ICaptureFactory::create();
 	string sceneFile = mModelPath;
-	iCapture->preview(sceneFile, radius);
+	iCapture->preview(sceneFile, radius, mInterval);
 }
 
 
