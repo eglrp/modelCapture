@@ -2,6 +2,7 @@
 #include "ICapture.h"
 #include <osg/Vec3d>
 #include <osg/Node>
+#include <mutex>
 
 namespace capture
 {
@@ -34,7 +35,20 @@ namespace capture
 		*/
 		virtual void preview(std::string sceneFileName, double radius, int interval);
 
+		/*
+		** brief 具体执行预览的函数
+		** param 
+		*/
+		virtual void previewImplement(std::string sceneFileName, double radius, int interval);
+
 	protected:
+		/*
+		** brief 计算所有球面上的拍摄点
+		** param center 球体中心
+		** param radius 半径长度
+		*/
+		std::vector<osg::Vec3d> calAllCameraPoint(int interval, double radius, osg::Vec3d center);
+
 		/*
 		** brief 绘制基础球体
 		** param center 球体中心
@@ -45,6 +59,8 @@ namespace capture
 		/*
 		** brief 绘制相机位置
 		** param interval 间隔
+		** param radius 半径
+		** param center 球中心
 		*/
 		osg::Node* drawCameraPosition(int interval, double radius, osg::Vec3d center);
 
@@ -52,13 +68,17 @@ namespace capture
 		** brief 绘制相机位置
 		** param interval 间隔
 		*/
-		osg::Geode* drawBasePoint(osg::Vec3d pt);
+		osg::Geode* drawBasePoint(osg::Vec3d pt, osg::Vec4d clr);
 
 		/*
 		** brief 创建点样式
 		** param size 点大小
 		*/
 		osg::StateSet* makePtState(int size);
+
+	protected:
+		std::vector<osg::Vec3d> mVecCameraPos;
+
 
 	};
 }

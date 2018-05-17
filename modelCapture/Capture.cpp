@@ -34,6 +34,14 @@
 
 #include <osg/Point>
 
+#include <osgGA/StateSetManipulator>
+
+#include <thread>
+
+#include "osgViewer/CompositeViewer"
+#include "EmptyCameraHandler.h"
+#include "PickHandler.h"
+
 using namespace std;
 using namespace osg;
 using namespace osgGA;
@@ -182,7 +190,6 @@ public:
 
 	bool _cullOnly;
 };
-
 
 
 
@@ -347,33 +354,144 @@ void CCapture::autoCaptureImage(std::string sceneFileName, std::string outFileNa
 void CCapture::preview(std::string sceneFileName, double radius, int interval)
 {
 	osg::ref_ptr<osg::Node> node = osgDB::readNodeFile(sceneFileName);
+	osg::BoundingSphere bs = node->getBound();
+	Vec3d center = bs.center();
 
-	osg::ref_ptr<osg::Group> group = new osg::Group;
-	group->addChild(node);
+	mVecCameraPos = calAllCameraPoint(interval, radius, center);
+
+	std::thread t(&CCapture::previewImplement, this, sceneFileName, radius, interval);
+	t.join();
+}
+
+void CCapture::previewImplement(std::string sceneFileName, double radius, int interval)
+{
+	osg::ref_ptr<osg::Node> node = osgDB::readNodeFile(sceneFileName);
+
+	osg::ref_ptr<osg::Node> node2 = osgDB::readNodeFile(sceneFileName);
+
+	osg::ref_ptr<osg::Group> root = new osg::Group;
+	osg::ref_ptr<osg::Group> sceneGroup = new osg::Group;
+	osg::ref_ptr<osg::Group> sphereGroup = new osg::Group;
+	osg::ref_ptr<osg::Group> cameraPointGroup = new osg::Group;
+	osg::ref_ptr<osg::Group> highLightPointGroup = new osg::Group;
+
+	root->addChild(sceneGroup);
+	root->addChild(sphereGroup);
+	root->addChild(cameraPointGroup);
+	root->addChild(highLightPointGroup);
+
+	//加载场景
+	sceneGroup->addChild(node);
 
 	//绘制球体
 	osg::BoundingSphere bs = node->getBound();
 	Vec3d center = bs.center();
 	ref_ptr<Node> sphere = drawBaseShpere(center, radius);
-	group->addChild(sphere);
+	sphereGroup->addChild(sphere);
 
 	ref_ptr<Node> cameraPos = drawCameraPosition(interval, radius, center);
-	group->addChild(cameraPos);
+	cameraPointGroup->addChild(cameraPos);
+
+	//创建gc
+	osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
+	traits->x = 100;
+	traits->y = 100;
+	traits->width = 1000;
+	traits->height = 800;
+	traits->windowDecoration = true;
+	traits->doubleBuffer = true;
+	traits->sharedContext = 0;
+
+	osg::ref_ptr<osg::GraphicsContext> gc = osg::GraphicsContext::createGraphicsContext(traits.get());
+	if (gc.valid())
+	{
+		osg::notify(osg::INFO) << "  GraphicsWindow has been created successfully." << std::endl;
+
+		// need to ensure that the window is cleared make sure that the complete window is set the correct colour
+		// rather than just the parts of the window that are under the camera's viewports
+		gc->setClearColor(osg::Vec4f(0.2f, 0.2f, 0.6f, 1.0f));
+		gc->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
+	else
+	{
+		osg::notify(osg::NOTICE) << "  GraphicsWindow has not been created successfully." << std::endl;
+	}
+
+	//创建复合viewer
+	osg::ref_ptr<osgViewer::CompositeViewer> viewer = new osgViewer::CompositeViewer();
 	
-	osgViewer::Viewer viewer;
+	//创建主view
+	{
+		osg::ref_ptr<osgViewer::View> view1 = new osgViewer::View;
+		view1->setName("main view");
+		view1->setSceneData(root);
+		view1->getCamera()->setGraphicsContext(gc.get());
+		view1->setCameraManipulator(new osgGA::TrackballManipulator);
+		view1->addEventHandler(new osgViewer::WindowSizeHandler);
+		view1->getCamera()->setViewport(new osg::Viewport(0, 0, traits->width, traits->height));
+		//禁用裁剪小细节
+		osg::CullStack::CullingMode cullingMode = view1->getCamera()->getCullingMode();
+		cullingMode &= ~(osg::CullStack::SMALL_FEATURE_CULLING);
+		view1->getCamera()->setCullingMode(cullingMode);
+		viewer->addView(view1);
+	}
+	
+	{
+		//创建截图展示view
+		osg::ref_ptr<osgViewer::View> view2 = new osgViewer::View;
+		view2->setName("sub view");
+		view2->setSceneData(node2);
+		view2->getCamera()->setViewport(new osg::Viewport(0, 0, 300, 300));
+		view2->getCamera()->setClearColor(osg::Vec4d(0.2, 0.2, 0.2, 1));
+		view2->getCamera()->setGraphicsContext(gc.get());
 
-	//禁用裁剪小细节
-	osg::CullStack::CullingMode cullingMode = viewer.getCamera()->getCullingMode();
-	cullingMode &= ~(osg::CullStack::SMALL_FEATURE_CULLING);
-	viewer.getCamera()->setCullingMode(cullingMode);
+		osg::ref_ptr<CEmptyCameraHandler> emptyCamera = new CEmptyCameraHandler;
+		view2->setCameraManipulator(emptyCamera);
 
-	viewer.setSceneData(group);
+		Vec3d up(0, 0, 1);
 
-	viewer.realize();
+		if (mVecCameraPos.size() > 0)
+		{
+			auto pt = mVecCameraPos[mVecCameraPos.size() - 1];
+			emptyCamera->setTransformation(pt, center, up);
 
-	viewer.run();
+			osg::ref_ptr<osg::Geode> geode = drawBasePoint(pt, Vec4d(0, 1, 1, 1));
+			highLightPointGroup->addChild(geode);
+		}
+
+		viewer->addView(view2);
+
+	}
+
+	while (!viewer->done())
+	{
+		viewer->frame();
+	}
+	
 }
 
+
+vector<Vec3d> CCapture::calAllCameraPoint(int interval, double radius, Vec3d center)
+{
+	vector<Vec3d> vecCameraPos;
+
+	for (int latitude = -180; latitude <= 180; latitude = latitude + interval)
+	{
+		for (int longtitude = -180; longtitude <= 180; longtitude = longtitude + interval)
+		{
+			double t = latitude;
+			double p = longtitude;
+
+			double x = radius * sin(t / 180 * PI) * cos(p / 180 * PI) + center.x();
+			double y = radius * sin(t / 180 * PI) * sin(p / 180 * PI) + center.y();
+			double z = radius * cos(t / 180 * PI) + center.z();
+
+			vecCameraPos.push_back(Vec3d(x, y, z));
+		}
+	}
+
+	return vecCameraPos;
+}
 
 
 Node* CCapture::drawBaseShpere(const osg::Vec3d &center, double radius)
@@ -395,29 +513,23 @@ Node* CCapture::drawBaseShpere(const osg::Vec3d &center, double radius)
 	return unitSphere.release();
 }
 
+
 Node* CCapture::drawCameraPosition(int interval, double radius, Vec3d center)
 {
 	ref_ptr<Group> grp = new Group;
 
-	for (int latitude = -180; latitude <= 180; latitude = latitude + interval)
-	{
-		for (int longtitude = -180; longtitude <= 180; longtitude = longtitude + interval)
-		{
-			double t = latitude;
-			double p = longtitude;
+	auto vecEye = calAllCameraPoint(interval, radius, center);
 
-			double x = radius * sin(t / 180 * PI) * cos(p / 180 * PI) + center.x();
-			double y = radius * sin(t / 180 * PI) * sin(p / 180 * PI) + center.y();
-			double z = radius * cos(t / 180 * PI) + center.z();
-			ref_ptr<Geode> pt = drawBasePoint(Vec3d(x, y, z));
-			grp->addChild(pt);
-		}
+	for (auto eye : vecEye)
+	{
+		ref_ptr<Geode> pt = drawBasePoint(eye, Vec4d(1, 0, 0, 1));
+		grp->addChild(pt);
 	}
 
 	return grp.release();
 }
 
-Geode* CCapture::drawBasePoint(Vec3d pt)
+Geode* CCapture::drawBasePoint(Vec3d pt, Vec4d clr)
 {
 	//绘制点
 	ref_ptr<Geode> geode = new Geode();
@@ -428,7 +540,7 @@ Geode* CCapture::drawBasePoint(Vec3d pt)
 	geomPt->setVertexArray(ptArray);
 	//设定颜色
 	ref_ptr<Vec4Array> colorArray = new Vec4Array();
-	colorArray->push_back(Vec4d(1, 0, 0, 1));
+	colorArray->push_back(clr);
 	geomPt->setColorArray(colorArray);
 	geomPt->setColorBinding(Geometry::BIND_PER_VERTEX);
 

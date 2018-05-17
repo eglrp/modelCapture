@@ -188,18 +188,22 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Capture.h" />
+    <ClInclude Include="EmptyCameraHandler.h" />
     <ClInclude Include="ICapture.h" />
     <ClInclude Include="modelCapture.h" />
     <ClInclude Include="modelCaptureDlg.h" />
+    <ClInclude Include="PickHandler.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Capture.cpp" />
+    <ClCompile Include="EmptyCameraHandler.cpp" />
     <ClCompile Include="ICapture.cpp" />
     <ClCompile Include="modelCapture.cpp" />
     <ClCompile Include="modelCaptureDlg.cpp" />
+    <ClCompile Include="PickHandler.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

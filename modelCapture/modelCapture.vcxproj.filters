@@ -39,6 +39,12 @@
     <ClInclude Include="ICapture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PickHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EmptyCameraHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="modelCapture.cpp">
@@ -54,6 +60,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ICapture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PickHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EmptyCameraHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
