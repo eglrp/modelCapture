@@ -27,8 +27,13 @@ namespace capture
 			double centerX, double centerY, double centerZ,
 			double upX, double upY, double upZ) = 0;
 
-
-		virtual void preview(std::string sceneFileName, double radius) = 0;
+		/*
+		** brief 预览
+		** param sceneFileName 捕捉的场景文件 全路径
+		** param radius 半径
+		** param interval 间距
+		*/
+		virtual void preview(std::string sceneFileName, double radius, int interval) = 0;
 	};
 
 

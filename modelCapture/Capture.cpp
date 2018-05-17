@@ -32,6 +32,8 @@
 #include <osg/BlendFunc>
 #include <osg/ShapeDrawable>
 
+#include <osg/Point>
+
 using namespace std;
 using namespace osg;
 using namespace osgGA;
@@ -202,6 +204,7 @@ void CCapture::autoCaptureImage(std::string sceneFileName, std::string outFileNa
 	Vec3d eye(eyeX, eyeY, eyeZ);
 	Vec3d center(centerX, centerY, centerZ);
 	Vec3d up(upX, upY, upZ);
+	
 	// Construct the viewer and register options arguments.
 	osgViewer::Viewer viewer;
 
@@ -341,7 +344,7 @@ void CCapture::autoCaptureImage(std::string sceneFileName, std::string outFileNa
 
 
 
-void CCapture::preview(std::string sceneFileName, double radius)
+void CCapture::preview(std::string sceneFileName, double radius, int interval)
 {
 	osg::ref_ptr<osg::Node> node = osgDB::readNodeFile(sceneFileName);
 
@@ -351,10 +354,18 @@ void CCapture::preview(std::string sceneFileName, double radius)
 	//绘制球体
 	osg::BoundingSphere bs = node->getBound();
 	Vec3d center = bs.center();
-	osg::ref_ptr<osg::Node> sphere = drawBaseShpere(center, radius);
+	ref_ptr<Node> sphere = drawBaseShpere(center, radius);
 	group->addChild(sphere);
+
+	ref_ptr<Node> cameraPos = drawCameraPosition(interval, radius, center);
+	group->addChild(cameraPos);
 	
 	osgViewer::Viewer viewer;
+
+	//禁用裁剪小细节
+	osg::CullStack::CullingMode cullingMode = viewer.getCamera()->getCullingMode();
+	cullingMode &= ~(osg::CullStack::SMALL_FEATURE_CULLING);
+	viewer.getCamera()->setCullingMode(cullingMode);
 
 	viewer.setSceneData(group);
 
@@ -382,4 +393,68 @@ Node* CCapture::drawBaseShpere(const osg::Vec3d &center, double radius)
 	unitSphere->addDrawable(shapeDrawable.get());
 
 	return unitSphere.release();
+}
+
+Node* CCapture::drawCameraPosition(int interval, double radius, Vec3d center)
+{
+	ref_ptr<Group> grp = new Group;
+
+	for (int latitude = -180; latitude <= 180; latitude = latitude + interval)
+	{
+		for (int longtitude = -180; longtitude <= 180; longtitude = longtitude + interval)
+		{
+			double t = latitude;
+			double p = longtitude;
+
+			double x = radius * sin(t / 180 * PI) * cos(p / 180 * PI) + center.x();
+			double y = radius * sin(t / 180 * PI) * sin(p / 180 * PI) + center.y();
+			double z = radius * cos(t / 180 * PI) + center.z();
+			ref_ptr<Geode> pt = drawBasePoint(Vec3d(x, y, z));
+			grp->addChild(pt);
+		}
+	}
+
+	return grp.release();
+}
+
+Geode* CCapture::drawBasePoint(Vec3d pt)
+{
+	//绘制点
+	ref_ptr<Geode> geode = new Geode();
+	ref_ptr<Geometry> geomPt = new Geometry();
+	//设定点
+	ref_ptr<Vec3Array> ptArray = new Vec3Array();
+	ptArray->push_back(pt);
+	geomPt->setVertexArray(ptArray);
+	//设定颜色
+	ref_ptr<Vec4Array> colorArray = new Vec4Array();
+	colorArray->push_back(Vec4d(1, 0, 0, 1));
+	geomPt->setColorArray(colorArray);
+	geomPt->setColorBinding(Geometry::BIND_PER_VERTEX);
+
+	//设定点样式
+	double size = 4.5f;
+	ref_ptr<StateSet> stateSet = makePtState(size);
+	geomPt->setStateSet(stateSet);
+
+	ref_ptr<DrawArrays> drawArray = new DrawArrays(PrimitiveSet::POINTS, 0, ptArray->size());
+	//添加几何节点
+	geomPt->addPrimitiveSet(drawArray);
+	geode->addDrawable(geomPt);
+
+	//设置类型
+	geode->setName("point");
+	return geode.release();
+}
+
+StateSet* CCapture::makePtState(int size)
+{
+	//设置样式
+	ref_ptr<StateSet> set = new StateSet();
+	ref_ptr<Point> point = new Point();
+	point->setSize(size);
+	set->setAttribute(point);
+	set->setMode(GL_DEPTH_TEST, StateAttribute::OFF);
+	set->setMode(GL_LIGHTING, StateAttribute::OFF);
+	return set.release();
 }
