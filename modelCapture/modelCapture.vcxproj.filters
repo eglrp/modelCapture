@@ -45,6 +45,18 @@
     <ClInclude Include="EmptyCameraHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Drawer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IDrawer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qcomm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SnapPara.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="modelCapture.cpp">
@@ -66,6 +78,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="EmptyCameraHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Drawer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IDrawer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qcomm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SnapPara.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

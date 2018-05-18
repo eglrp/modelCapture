@@ -8,6 +8,7 @@
 #include <string>
 #include <osg/Vec3d>
 #include "afxwin.h"
+#include "SnapPara.h"
 
 struct threadPara
 {
@@ -31,7 +32,7 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 
-	void startThread(std::vector<threadPara> vecPara, std::string modelFileName,
+	void startThread(std::vector<threadPara> vecPara, osg::ref_ptr<osg::Node> node,
 		int imageWidth, int imageHeight, osg::Vec3d center, osg::Vec3d up);
 
 
@@ -52,15 +53,8 @@ public:
 	afx_msg void OnBnClickedloadsnapsavepath2();
 
 public:
-
-	CString mModelPath;
-
-	CString mSnapSavePath;
-
-	int mWidth;
-
-	int mHeight;
-
-	double mR;
-	int mInterval;
+	std::shared_ptr<capture::CSnapPara> mSnapPara;
+	afx_msg void OnStnClickedInterval();
+	afx_msg void OnEnChangeRadius4();
+	afx_msg void OnEnChangeRadius();
 };

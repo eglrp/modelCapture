@@ -41,6 +41,8 @@
 #include "osgViewer/CompositeViewer"
 #include "EmptyCameraHandler.h"
 #include "PickHandler.h"
+#include "IDrawer.h"
+#include "SnapPara.h"
 
 using namespace std;
 using namespace osg;
@@ -203,11 +205,18 @@ CCapture::~CCapture()
 }
 
 
-void CCapture::autoCaptureImage(std::string sceneFileName, std::string outFileName, int screenCaptureWidth, int screenCaptureHeight,
+void CCapture::autoCaptureImage(osg::ref_ptr<osg::Node> loadedModel, std::string outFileName, int screenCaptureWidth, int screenCaptureHeight,
 	double eyeX, double eyeY, double eyeZ,
 	double centerX, double centerY, double centerZ,
 	double upX, double upY, double upZ)
 {
+	// load the data
+	if (!loadedModel)
+	{
+		std::cout << ": No data loaded" << std::endl;
+		return;
+	}
+
 	Vec3d eye(eyeX, eyeY, eyeZ);
 	Vec3d center(centerX, centerY, centerZ);
 	Vec3d up(upX, upY, upZ);
@@ -267,16 +276,6 @@ void CCapture::autoCaptureImage(std::string sceneFileName, std::string outFileNa
 		{
 			notify(NOTICE) << "Pixel buffer has not been created successfully." << std::endl;
 		}
-	}
-
-
-
-	// load the data
-	ref_ptr<Node> loadedModel = readNodeFile(sceneFileName);
-	if (!loadedModel)
-	{
-		std::cout << ": No data loaded" << std::endl;
-		return;
 	}
 
 	loadedModel->getOrCreateStateSet()->setMode(GL_LIGHTING, 0x2);
@@ -351,23 +350,20 @@ void CCapture::autoCaptureImage(std::string sceneFileName, std::string outFileNa
 
 
 
-void CCapture::preview(std::string sceneFileName, double radius, int interval)
+void CCapture::preview(shared_ptr<CSnapPara> para)
 {
-	osg::ref_ptr<osg::Node> node = osgDB::readNodeFile(sceneFileName);
-	osg::BoundingSphere bs = node->getBound();
-	Vec3d center = bs.center();
 
-	mVecCameraPos = calAllCameraPoint(interval, radius, center);
-
-	std::thread t(&CCapture::previewImplement, this, sceneFileName, radius, interval);
-	t.join();
+	std::thread t(&CCapture::previewImplement, this, para);
+	t.detach();
 }
 
-void CCapture::previewImplement(std::string sceneFileName, double radius, int interval)
+void CCapture::previewImplement(shared_ptr<CSnapPara> para)
 {
-	osg::ref_ptr<osg::Node> node = osgDB::readNodeFile(sceneFileName);
-
-	osg::ref_ptr<osg::Node> node2 = osgDB::readNodeFile(sceneFileName);
+	double radius = para->mRadius;
+	int interval = para->mInterval;
+	Vec3d center = para->mCenter;
+	osg::ref_ptr<osg::Node> model = para->mSceneNode;
+	osg::ref_ptr<osg::Node> snapNode = dynamic_cast<osg::Node*> (model->clone(osg::CopyOp::DEEP_COPY_ALL));
 
 	osg::ref_ptr<osg::Group> root = new osg::Group;
 	osg::ref_ptr<osg::Group> sceneGroup = new osg::Group;
@@ -381,16 +377,9 @@ void CCapture::previewImplement(std::string sceneFileName, double radius, int in
 	root->addChild(highLightPointGroup);
 
 	//加载场景
-	sceneGroup->addChild(node);
+	sceneGroup->addChild(model);
 
-	//绘制球体
-	osg::BoundingSphere bs = node->getBound();
-	Vec3d center = bs.center();
-	ref_ptr<Node> sphere = drawBaseShpere(center, radius);
-	sphereGroup->addChild(sphere);
-
-	ref_ptr<Node> cameraPos = drawCameraPosition(interval, radius, center);
-	cameraPointGroup->addChild(cameraPos);
+	
 
 	//创建gc
 	osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
@@ -419,6 +408,7 @@ void CCapture::previewImplement(std::string sceneFileName, double radius, int in
 
 	//创建复合viewer
 	osg::ref_ptr<osgViewer::CompositeViewer> viewer = new osgViewer::CompositeViewer();
+	osg::ref_ptr<CEmptyCameraHandler> emptyCamera = new CEmptyCameraHandler();
 	
 	//创建主view
 	{
@@ -434,34 +424,39 @@ void CCapture::previewImplement(std::string sceneFileName, double radius, int in
 		cullingMode &= ~(osg::CullStack::SMALL_FEATURE_CULLING);
 		view1->getCamera()->setCullingMode(cullingMode);
 		viewer->addView(view1);
+
+		osg::ref_ptr<CPickHandler> pickHandler = new CPickHandler(emptyCamera, para);
+		view1->addEventHandler(pickHandler);
 	}
 	
 	{
 		//创建截图展示view
 		osg::ref_ptr<osgViewer::View> view2 = new osgViewer::View;
 		view2->setName("sub view");
-		view2->setSceneData(node2);
+		view2->setSceneData(snapNode);
 		view2->getCamera()->setViewport(new osg::Viewport(0, 0, 300, 300));
 		view2->getCamera()->setClearColor(osg::Vec4d(0.2, 0.2, 0.2, 1));
 		view2->getCamera()->setGraphicsContext(gc.get());
 
-		osg::ref_ptr<CEmptyCameraHandler> emptyCamera = new CEmptyCameraHandler;
 		view2->setCameraManipulator(emptyCamera);
 
 		Vec3d up(0, 0, 1);
 
-		if (mVecCameraPos.size() > 0)
+		auto vecCameraPos = para->calAllCameraPoint();
+
+		if (vecCameraPos.size() > 0)
 		{
-			auto pt = mVecCameraPos[mVecCameraPos.size() - 1];
+			auto pt = vecCameraPos[vecCameraPos.size() - 1];
 			emptyCamera->setTransformation(pt, center, up);
 
-			osg::ref_ptr<osg::Geode> geode = drawBasePoint(pt, Vec4d(0, 1, 1, 1));
-			highLightPointGroup->addChild(geode);
+		
 		}
 
 		viewer->addView(view2);
-
 	}
+
+	//绘制场景展示
+	drawGraphic(para, root);
 
 	while (!viewer->done())
 	{
@@ -470,103 +465,48 @@ void CCapture::previewImplement(std::string sceneFileName, double radius, int in
 	
 }
 
-
-vector<Vec3d> CCapture::calAllCameraPoint(int interval, double radius, Vec3d center)
+void CCapture::drawGraphic(std::shared_ptr<CSnapPara> para, osg::ref_ptr<Group> root)
 {
-	vector<Vec3d> vecCameraPos;
+	osg::ref_ptr<osg::Group> sphereGroup = root->getChild(1)->asGroup();
+	osg::ref_ptr<osg::Group> cameraPointGroup = root->getChild(2)->asGroup();
 
-	for (int latitude = -180; latitude <= 180; latitude = latitude + interval)
-	{
-		for (int longtitude = -180; longtitude <= 180; longtitude = longtitude + interval)
-		{
-			double t = latitude;
-			double p = longtitude;
 
-			double x = radius * sin(t / 180 * PI) * cos(p / 180 * PI) + center.x();
-			double y = radius * sin(t / 180 * PI) * sin(p / 180 * PI) + center.y();
-			double z = radius * cos(t / 180 * PI) + center.z();
+	shared_ptr<IDrawer> iDrawer = IDrawerFactory::create();
 
-			vecCameraPos.push_back(Vec3d(x, y, z));
-		}
-	}
+	//绘制球体
+	Vec3d center = para->mCenter;
+	double radius = para->mRadius;
+	double latMin = para->mMinLatitude;
+	double latMax = para->mMaxLatitude;
+	double longMin = para->mMinLongitude;
+	double longMax = para->mMaxLongitude;
 
-	return vecCameraPos;
+	ref_ptr<Node> sphere = iDrawer->drawBaseShpere(center, radius);
+	sphereGroup->addChild(sphere);
+
+	//绘制相机位置
+	ref_ptr<Node> cameraPos = drawCameraPosition(para);
+	cameraPointGroup->addChild(cameraPos);
+
+	//绘制半椎体
+	ref_ptr<Node> fan = iDrawer->drawFan(center, radius * 2, latMin, latMax, longMin, longMax);
+	sphereGroup->addChild(fan);
 }
 
 
-Node* CCapture::drawBaseShpere(const osg::Vec3d &center, double radius)
-{
-	ref_ptr<Sphere> sphere = new Sphere(center, radius);
-	ref_ptr<Geode> unitSphere = new Geode;
-
-	osg::ref_ptr<osg::BlendFunc> blendFunc = new osg::BlendFunc();
-	blendFunc->setSource(osg::BlendFunc::SRC_ALPHA);
-	blendFunc->setDestination(osg::BlendFunc::ONE_MINUS_CONSTANT_ALPHA);
-
-
-	ref_ptr<osg::ShapeDrawable> shapeDrawable = new osg::ShapeDrawable(sphere.get());
-	shapeDrawable->setColor(osg::Vec4d(0, 1, 0, 0.5));
-	unitSphere->getOrCreateStateSet()->setAttributeAndModes(blendFunc);
-
-	unitSphere->addDrawable(shapeDrawable.get());
-
-	return unitSphere.release();
-}
-
-
-Node* CCapture::drawCameraPosition(int interval, double radius, Vec3d center)
+Node* CCapture::drawCameraPosition(shared_ptr<CSnapPara> para)
 {
 	ref_ptr<Group> grp = new Group;
+	shared_ptr<IDrawer> iDrawer = IDrawerFactory::create();
 
-	auto vecEye = calAllCameraPoint(interval, radius, center);
+	auto vecEye = para->calAllCameraPoint();
 
 	for (auto eye : vecEye)
 	{
-		ref_ptr<Geode> pt = drawBasePoint(eye, Vec4d(1, 0, 0, 1));
+		ref_ptr<Geode> pt = iDrawer->drawBasePoint(eye, Vec4d(1, 0, 0, 1));
 		grp->addChild(pt);
 	}
 
 	return grp.release();
 }
 
-Geode* CCapture::drawBasePoint(Vec3d pt, Vec4d clr)
-{
-	//绘制点
-	ref_ptr<Geode> geode = new Geode();
-	ref_ptr<Geometry> geomPt = new Geometry();
-	//设定点
-	ref_ptr<Vec3Array> ptArray = new Vec3Array();
-	ptArray->push_back(pt);
-	geomPt->setVertexArray(ptArray);
-	//设定颜色
-	ref_ptr<Vec4Array> colorArray = new Vec4Array();
-	colorArray->push_back(clr);
-	geomPt->setColorArray(colorArray);
-	geomPt->setColorBinding(Geometry::BIND_PER_VERTEX);
-
-	//设定点样式
-	double size = 4.5f;
-	ref_ptr<StateSet> stateSet = makePtState(size);
-	geomPt->setStateSet(stateSet);
-
-	ref_ptr<DrawArrays> drawArray = new DrawArrays(PrimitiveSet::POINTS, 0, ptArray->size());
-	//添加几何节点
-	geomPt->addPrimitiveSet(drawArray);
-	geode->addDrawable(geomPt);
-
-	//设置类型
-	geode->setName("point");
-	return geode.release();
-}
-
-StateSet* CCapture::makePtState(int size)
-{
-	//设置样式
-	ref_ptr<StateSet> set = new StateSet();
-	ref_ptr<Point> point = new Point();
-	point->setSize(size);
-	set->setAttribute(point);
-	set->setMode(GL_DEPTH_TEST, StateAttribute::OFF);
-	set->setMode(GL_LIGHTING, StateAttribute::OFF);
-	return set.release();
-}

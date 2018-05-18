@@ -161,7 +161,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;OUTPUTLOGFILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\thirdPartyLibrary\osg\include</AdditionalIncludeDirectories>
     </ClCompile>
@@ -188,22 +188,30 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Capture.h" />
+    <ClInclude Include="Drawer.h" />
     <ClInclude Include="EmptyCameraHandler.h" />
     <ClInclude Include="ICapture.h" />
+    <ClInclude Include="IDrawer.h" />
     <ClInclude Include="modelCapture.h" />
     <ClInclude Include="modelCaptureDlg.h" />
     <ClInclude Include="PickHandler.h" />
+    <ClInclude Include="qcomm.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SnapPara.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Capture.cpp" />
+    <ClCompile Include="Drawer.cpp" />
     <ClCompile Include="EmptyCameraHandler.cpp" />
     <ClCompile Include="ICapture.cpp" />
+    <ClCompile Include="IDrawer.cpp" />
     <ClCompile Include="modelCapture.cpp" />
     <ClCompile Include="modelCaptureDlg.cpp" />
     <ClCompile Include="PickHandler.cpp" />
+    <ClCompile Include="qcomm.cpp" />
+    <ClCompile Include="SnapPara.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

@@ -1,11 +1,12 @@
 #pragma once
 #include <memory>
 #include <string>
-
+#include <osg/Node>
 
 
 namespace capture
 {
+	class CSnapPara;
 	/*
 	** brief 截图接口
 	*/
@@ -22,18 +23,16 @@ namespace capture
 		** param screenCaptureWidth screenCaptureHeight 截图宽高
 		** param eye center up 视点、中心、相机方向
 		*/
-		virtual void autoCaptureImage(std::string sceneFileName, std::string outFileName, int screenCaptureWidth, int screenCaptureHeight,
+		virtual void autoCaptureImage(osg::ref_ptr<osg::Node> loadedModel, std::string outFileName, int screenCaptureWidth, int screenCaptureHeight,
 			double eyeX, double eyeY, double eyeZ,  
 			double centerX, double centerY, double centerZ,
 			double upX, double upY, double upZ) = 0;
 
 		/*
 		** brief 预览
-		** param sceneFileName 捕捉的场景文件 全路径
-		** param radius 半径
-		** param interval 间距
+		** param para 界面参数
 		*/
-		virtual void preview(std::string sceneFileName, double radius, int interval) = 0;
+		virtual void preview(std::shared_ptr<CSnapPara> para) = 0;
 	};
 
 

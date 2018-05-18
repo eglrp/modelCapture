@@ -1,5 +1,6 @@
 #pragma once
 #include <osgGA/TrackballManipulator>
+#include "EmptyCameraHandler.h"
 
 namespace capture
 {
@@ -13,6 +14,9 @@ namespace capture
 		virtual ~CEmptyCameraHandler();
 
 		virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& us);
+
+	protected:
+
 	};
 }
 
