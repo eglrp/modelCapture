@@ -21,6 +21,7 @@ struct threadPara
 	double y;
 	double z;
 	std::string snapFile;
+	osg::Vec3d up;
 };
 
 
@@ -80,4 +81,6 @@ public:
 	afx_msg void OnBnClickedButton8();
 	afx_msg void OnBnClickedButton12();
 	afx_msg void OnBnClickedButton10();
+	afx_msg void OnBnClickedCheck1();
+	BOOL mUpSideDown;
 };

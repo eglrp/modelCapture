@@ -38,6 +38,8 @@ namespace capture
 		double mMinLongitude = 0;
 
 		double mMaxLongitude = 0;
+
+		osg::Vec3d mUp = osg::Vec3d(0, 0, 1);
 	};
 
 }

@@ -60,7 +60,7 @@ bool CPickHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 					if (sceneNode)
 					{
 						//如果在范围内, 切换视图
-						Vec3d up(0, 0, 1);
+						Vec3d up = mPara->mUp;
 						switchSnapView(pos, mPara->mCenter, up);
 					}
 				}

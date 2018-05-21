@@ -64,6 +64,7 @@ END_MESSAGE_MAP()
 
 CmodelCaptureDlg::CmodelCaptureDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CmodelCaptureDlg::IDD, pParent)
+	, mUpSideDown(FALSE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
@@ -86,6 +87,7 @@ void CmodelCaptureDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, ID_RADIUS4, mSnapPara->mMaxLatitude);
 	DDX_Text(pDX, ID_RADIUS5, mSnapPara->mMinLongitude);
 	DDX_Text(pDX, ID_RADIUS6, mSnapPara->mMaxLongitude);
+	DDX_Check(pDX, IDC_CHECK1, mUpSideDown);
 }
 
 BEGIN_MESSAGE_MAP(CmodelCaptureDlg, CDialogEx)
@@ -114,6 +116,7 @@ BEGIN_MESSAGE_MAP(CmodelCaptureDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON8, &CmodelCaptureDlg::OnBnClickedButton8)
 	ON_BN_CLICKED(IDC_BUTTON12, &CmodelCaptureDlg::OnBnClickedButton12)
 	ON_BN_CLICKED(IDC_BUTTON10, &CmodelCaptureDlg::OnBnClickedButton10)
+	ON_BN_CLICKED(IDC_CHECK1, &CmodelCaptureDlg::OnBnClickedCheck1)
 END_MESSAGE_MAP()
 
 
@@ -262,7 +265,7 @@ void CmodelCaptureDlg::OnBnClickedImage()
 	int interval = mSnapPara->mInterval;
 	double radius = mSnapPara->mRadius;
 	Vec3d center = mSnapPara->mCenter;
-	Vec3d up(0, 0, 1);
+	Vec3d up = mSnapPara->mUp;
 
 	struct threadFunc
 	{
@@ -296,6 +299,7 @@ void CmodelCaptureDlg::OnBnClickedImage()
 				para.y = y;
 				para.z = z;
 				para.snapFile = snapFile;
+				para.up = up;
 
 				int groupNum = totalNum % threadMax;
 				thr[groupNum].vecPara.push_back(para);
@@ -334,7 +338,7 @@ void CmodelCaptureDlg::startThread(vector<threadPara> vecPara, ref_ptr<Node> nod
 		double z = para.z;
 		string snapFile = para.snapFile;
 
-		Vec3d up(0, 0, 1);
+		Vec3d up = para.up;
 
 		ref_ptr<Node> model = dynamic_cast<osg::Node*> (node->clone(osg::CopyOp::DEEP_COPY_ALL));
 
@@ -584,4 +588,18 @@ void CmodelCaptureDlg::OnBnClickedButton10()
 	mSnapPara->mMaxLongitude++;
 	iCapture->refresh(mSnapPara);
 	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedCheck1()
+{
+	// TODO: Add your control notification handler code here
+	if (mUpSideDown == TRUE)
+	{
+		mSnapPara->mUp = Vec3d(0, 0, 1);
+	}
+	else
+	{
+		mSnapPara->mUp = Vec3d(0, 0, -1);
+	}
 }
