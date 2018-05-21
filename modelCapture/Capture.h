@@ -42,6 +42,13 @@ namespace capture
 		*/
 		virtual void previewImplement(std::shared_ptr<CSnapPara> para);
 
+		/*
+		** brief 整体刷新
+		*/
+		virtual void refresh(std::shared_ptr<CSnapPara> para);
+
+		virtual void setPreview();
+
 	protected:
 		void drawGraphic(std::shared_ptr<CSnapPara> para, osg::ref_ptr<osg::Group> root);
 		/*
@@ -49,6 +56,23 @@ namespace capture
 		** param para 界面参数
 		*/
 		osg::Node* drawCameraPosition(std::shared_ptr<CSnapPara> para);
+
+		/*
+		** brief 清除图形
+		** param root 根节点
+		*/
+		void clearGraphic(osg::ref_ptr<osg::Group> root);
+
+	protected:
+		/*
+		** brief 根节点
+		*/
+		osg::ref_ptr<osg::Group> mRoot;
+
+		/*
+		** brief 预览
+		*/
+		bool bPreview = false;
 	};
 }
 

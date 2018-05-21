@@ -10,6 +10,11 @@
 #include "afxwin.h"
 #include "SnapPara.h"
 
+namespace capture
+{
+	class ICapture;
+}
+
 struct threadPara
 {
 	double x;
@@ -40,6 +45,9 @@ public:
 protected:
 	HICON m_hIcon;
 
+	std::shared_ptr<capture::ICapture> iCapture;
+
+public:
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
@@ -57,4 +65,19 @@ public:
 	afx_msg void OnStnClickedInterval();
 	afx_msg void OnEnChangeRadius4();
 	afx_msg void OnEnChangeRadius();
+	afx_msg void OnEnChangeRadius3();
+	afx_msg void OnEnChangeRadius5();
+	afx_msg void OnEnChangeRadius6();
+	afx_msg void OnBnClickedButton1();
+	afx_msg void OnBnClickedButton2();
+	afx_msg void OnBnClickedButton3();
+	afx_msg void OnBnClickedButton4();
+	afx_msg void OnBnClickedButton5();
+	afx_msg void OnBnClickedButton6();
+	afx_msg void OnBnClickedButton9();
+	afx_msg void OnBnClickedButton11();
+	afx_msg void OnBnClickedButton7();
+	afx_msg void OnBnClickedButton8();
+	afx_msg void OnBnClickedButton12();
+	afx_msg void OnBnClickedButton10();
 };

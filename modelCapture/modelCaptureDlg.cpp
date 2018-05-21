@@ -69,6 +69,8 @@ CmodelCaptureDlg::CmodelCaptureDlg(CWnd* pParent /*=NULL*/)
 
 	shared_ptr<CSnapPara> temp(new CSnapPara);
 	mSnapPara = temp;
+
+	iCapture = ICaptureFactory::create();
 }
 
 void CmodelCaptureDlg::DoDataExchange(CDataExchange* pDX)
@@ -97,6 +99,21 @@ BEGIN_MESSAGE_MAP(CmodelCaptureDlg, CDialogEx)
 	ON_STN_CLICKED(ID_INTERVAL, &CmodelCaptureDlg::OnStnClickedInterval)
 	ON_EN_CHANGE(ID_RADIUS4, &CmodelCaptureDlg::OnEnChangeRadius4)
 	ON_EN_CHANGE(ID_RADIUS, &CmodelCaptureDlg::OnEnChangeRadius)
+	ON_EN_CHANGE(ID_RADIUS3, &CmodelCaptureDlg::OnEnChangeRadius3)
+	ON_EN_CHANGE(ID_RADIUS5, &CmodelCaptureDlg::OnEnChangeRadius5)
+	ON_EN_CHANGE(ID_RADIUS6, &CmodelCaptureDlg::OnEnChangeRadius6)
+	ON_BN_CLICKED(IDC_BUTTON1, &CmodelCaptureDlg::OnBnClickedButton1)
+	ON_BN_CLICKED(IDC_BUTTON2, &CmodelCaptureDlg::OnBnClickedButton2)
+	ON_BN_CLICKED(IDC_BUTTON3, &CmodelCaptureDlg::OnBnClickedButton3)
+	ON_BN_CLICKED(IDC_BUTTON4, &CmodelCaptureDlg::OnBnClickedButton4)
+	ON_BN_CLICKED(IDC_BUTTON5, &CmodelCaptureDlg::OnBnClickedButton5)
+	ON_BN_CLICKED(IDC_BUTTON6, &CmodelCaptureDlg::OnBnClickedButton6)
+	ON_BN_CLICKED(IDC_BUTTON9, &CmodelCaptureDlg::OnBnClickedButton9)
+	ON_BN_CLICKED(IDC_BUTTON11, &CmodelCaptureDlg::OnBnClickedButton11)
+	ON_BN_CLICKED(IDC_BUTTON7, &CmodelCaptureDlg::OnBnClickedButton7)
+	ON_BN_CLICKED(IDC_BUTTON8, &CmodelCaptureDlg::OnBnClickedButton8)
+	ON_BN_CLICKED(IDC_BUTTON12, &CmodelCaptureDlg::OnBnClickedButton12)
+	ON_BN_CLICKED(IDC_BUTTON10, &CmodelCaptureDlg::OnBnClickedButton10)
 END_MESSAGE_MAP()
 
 
@@ -332,13 +349,13 @@ void CmodelCaptureDlg::OnBnClickedPreview()
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 
-	double radius = mSnapPara->mRadius;
 	/*IViewer->showCaptureSphere(radius);*/
 
 	AfxMessageBox(_T("预览开始，按esc退出"));
 
-	shared_ptr<ICapture> iCapture = ICaptureFactory::create();
 	iCapture->preview(mSnapPara);
+
+	iCapture->setPreview();
 }
 
 
@@ -363,6 +380,15 @@ void CmodelCaptureDlg::OnBnClickedloadsnapsavepath2()
 void CmodelCaptureDlg::OnStnClickedInterval()	
 {
 	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+
+	if (mSnapPara->mInterval == 0)
+	{
+		return;
+	}
+
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
 }
 
 
@@ -372,8 +398,11 @@ void CmodelCaptureDlg::OnEnChangeRadius4()
 	// send this notification unless you override the CDialogEx::OnInitDialog()
 	// function and call CRichEditCtrl().SetEventMask()
 	// with the ENM_CHANGE flag ORed into the mask.
-
+	UpdateData(TRUE);
 	// TODO:  Add your control notification handler code here
+	iCapture->refresh(mSnapPara);
+
+	UpdateData(FALSE);
 }
 
 
@@ -385,4 +414,174 @@ void CmodelCaptureDlg::OnEnChangeRadius()
 	// with the ENM_CHANGE flag ORed into the mask.
 
 	// TODO:  Add your control notification handler code here
+	UpdateData(TRUE);
+	iCapture->refresh(mSnapPara);
+
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnEnChangeRadius3()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+	UpdateData(TRUE);
+	iCapture->refresh(mSnapPara);
+
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnEnChangeRadius5()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+	UpdateData(TRUE);
+	iCapture->refresh(mSnapPara);
+
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnEnChangeRadius6()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+	UpdateData(TRUE);
+	iCapture->refresh(mSnapPara);
+
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton1()
+{
+	// TODO: Add your control notification handler code 
+	UpdateData(TRUE);
+	mSnapPara->mRadius--;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton2()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mRadius++;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton3()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mInterval--;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton4()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mInterval++;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton5()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMinLatitude--;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton6()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMinLatitude++;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton9()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMaxLatitude--;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton11()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMaxLatitude++;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton7()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMinLongitude--;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton8()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMinLongitude++;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton12()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMaxLongitude--;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton10()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMaxLongitude++;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
 }

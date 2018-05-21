@@ -33,6 +33,16 @@ namespace capture
 		** param para 界面参数
 		*/
 		virtual void preview(std::shared_ptr<CSnapPara> para) = 0;
+
+		/*
+		** brief 整体刷新
+		*/
+		virtual void refresh(std::shared_ptr<CSnapPara> para) = 0;
+
+		/*
+		** brief 设置预览
+		*/
+		virtual void setPreview() = 0;
 	};
 
 

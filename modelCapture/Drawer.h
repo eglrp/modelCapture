@@ -50,6 +50,10 @@ namespace capture
 		** param radius °ë¾¶
 		*/
 		void convertLatLongToXyz(double lat, double longtitude, osg::Vec3d &xyz, const osg::Vec3d &center, double radius);
+
+		osg::Geode* drawBaseCurLine(std::vector<osg::Vec3d> coord);
+
+		osg::StateSet* makeLineState();
 	};
 }
 

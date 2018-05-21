@@ -352,7 +352,6 @@ void CCapture::autoCaptureImage(osg::ref_ptr<osg::Node> loadedModel, std::string
 
 void CCapture::preview(shared_ptr<CSnapPara> para)
 {
-
 	std::thread t(&CCapture::previewImplement, this, para);
 	t.detach();
 }
@@ -365,21 +364,19 @@ void CCapture::previewImplement(shared_ptr<CSnapPara> para)
 	osg::ref_ptr<osg::Node> model = para->mSceneNode;
 	osg::ref_ptr<osg::Node> snapNode = dynamic_cast<osg::Node*> (model->clone(osg::CopyOp::DEEP_COPY_ALL));
 
-	osg::ref_ptr<osg::Group> root = new osg::Group;
+	mRoot = new osg::Group;
 	osg::ref_ptr<osg::Group> sceneGroup = new osg::Group;
 	osg::ref_ptr<osg::Group> sphereGroup = new osg::Group;
 	osg::ref_ptr<osg::Group> cameraPointGroup = new osg::Group;
 	osg::ref_ptr<osg::Group> highLightPointGroup = new osg::Group;
 
-	root->addChild(sceneGroup);
-	root->addChild(sphereGroup);
-	root->addChild(cameraPointGroup);
-	root->addChild(highLightPointGroup);
+	mRoot->addChild(sceneGroup);
+	mRoot->addChild(sphereGroup);
+	mRoot->addChild(cameraPointGroup);
+	mRoot->addChild(highLightPointGroup);
 
 	//加载场景
 	sceneGroup->addChild(model);
-
-	
 
 	//创建gc
 	osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
@@ -414,7 +411,7 @@ void CCapture::previewImplement(shared_ptr<CSnapPara> para)
 	{
 		osg::ref_ptr<osgViewer::View> view1 = new osgViewer::View;
 		view1->setName("main view");
-		view1->setSceneData(root);
+		view1->setSceneData(mRoot);
 		view1->getCamera()->setGraphicsContext(gc.get());
 		view1->setCameraManipulator(new osgGA::TrackballManipulator);
 		view1->addEventHandler(new osgViewer::WindowSizeHandler);
@@ -456,13 +453,31 @@ void CCapture::previewImplement(shared_ptr<CSnapPara> para)
 	}
 
 	//绘制场景展示
-	drawGraphic(para, root);
+	drawGraphic(para, mRoot);
 
 	while (!viewer->done())
 	{
 		viewer->frame();
 	}
+
+	bPreview = false;
 	
+}
+
+void CCapture::refresh(shared_ptr<CSnapPara> para)
+{
+	if (!bPreview)
+	{
+		return;
+	}
+
+	clearGraphic(mRoot);
+	drawGraphic(para, mRoot);
+}
+
+void CCapture::setPreview()
+{
+	bPreview = true;
 }
 
 void CCapture::drawGraphic(std::shared_ptr<CSnapPara> para, osg::ref_ptr<Group> root)
@@ -489,10 +504,22 @@ void CCapture::drawGraphic(std::shared_ptr<CSnapPara> para, osg::ref_ptr<Group> 
 	cameraPointGroup->addChild(cameraPos);
 
 	//绘制半椎体
-	ref_ptr<Node> fan = iDrawer->drawFan(center, radius * 2, latMin, latMax, longMin, longMax);
+	ref_ptr<Node> fan = iDrawer->drawFan(center, radius, latMin, latMax, longMin, longMax);
 	sphereGroup->addChild(fan);
 }
 
+
+void CCapture::clearGraphic(osg::ref_ptr<Group> root)
+{
+	osg::ref_ptr<osg::Group> sphereGroup = root->getChild(1)->asGroup();
+	osg::ref_ptr<osg::Group> cameraPointGroup = root->getChild(2)->asGroup();
+
+	int numSphereChild = sphereGroup->getNumChildren();
+	sphereGroup->removeChildren(0, numSphereChild);
+
+	int numCameraChild = cameraPointGroup->getNumChildren();
+	cameraPointGroup->removeChildren(0, numCameraChild);
+}
 
 Node* CCapture::drawCameraPosition(shared_ptr<CSnapPara> para)
 {

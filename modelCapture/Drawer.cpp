@@ -6,6 +6,8 @@
 #include <osg/ShapeDrawable>
 #include <osg/Geometry>
 #include <osg/Point>
+#include <osg/LineWidth>
+#include <osg/LineStipple>
 
 using namespace capture;
 using namespace osg;
@@ -44,50 +46,82 @@ Node* CDrawer::drawBaseShpere(const osg::Vec3d &center, double radius)
 osg::Node* CDrawer::drawFan(const osg::Vec3d &center, double radius, double latMin, double latMax, double longMin, double longMax)
 {
 	Vec3d leftBottom, rightBottom, leftTop, rightTop;
-	convertLatLongToXyz(latMin, longMin, leftBottom, center, radius);
-	convertLatLongToXyz(latMax, longMin, rightBottom, center, radius);
-	convertLatLongToXyz(latMin, longMax, leftTop, center, radius);
-	convertLatLongToXyz(latMax, longMax, rightTop, center, radius);
 
 	osg::ref_ptr<osg::Group> group = new osg::Group;
 
+	std::vector<osg::Vec3d> vecTop;
+	std::vector<osg::Vec3d> vecLeft;
+	std::vector<osg::Vec3d> vecRight;
+	std::vector<osg::Vec3d> vecBottom;
+
+	for (double lat = latMin; lat < latMax; lat++)
 	{
-		std::vector<osg::Vec3d> vecLeftSide;
-		vecLeftSide.push_back(center);
-		vecLeftSide.push_back(leftBottom);
-		vecLeftSide.push_back(leftTop);
-		osg::ref_ptr<osg::Node> leftSide = drawPolygon(vecLeftSide, osg::Vec4d(1, 1, 0, 0.5));
-		group->addChild(leftSide);
+		osg::Vec3d xyz;
+		convertLatLongToXyz(lat, longMax, xyz, center, radius);
+		vecTop.push_back(xyz);
 	}
 
+	for (double lat = latMin; lat < latMax; lat++)
 	{
-		std::vector<osg::Vec3d> vecRightSide;
-		vecRightSide.push_back(center);
-		vecRightSide.push_back(rightBottom);
-		vecRightSide.push_back(rightTop);
-		osg::ref_ptr<osg::Node> rightSide = drawPolygon(vecRightSide, osg::Vec4d(1, 1, 0, 0.5));
-		group->addChild(rightSide);
+		osg::Vec3d xyz;
+		convertLatLongToXyz(lat, longMin, xyz, center, radius);
+		vecBottom.push_back(xyz);
 	}
 
+	for (double lon = longMin; lon < longMax; lon++)
 	{
-		std::vector<osg::Vec3d> vecTopSide;
-		vecTopSide.push_back(center);
-		vecTopSide.push_back(leftTop);
-		vecTopSide.push_back(rightTop);
-		osg::ref_ptr<osg::Node> topSide = drawPolygon(vecTopSide, osg::Vec4d(1, 1, 0, 0.5));
-		group->addChild(topSide);
+		osg::Vec3d xyz;
+		convertLatLongToXyz(latMin, lon, xyz, center, radius);
+		vecLeft.push_back(xyz);
 	}
 
+	for (double lon = longMin; lon < longMax; lon++)
 	{
-		std::vector<osg::Vec3d> vecBottomSide;
-		vecBottomSide.push_back(center);
-		vecBottomSide.push_back(leftBottom);
-		vecBottomSide.push_back(rightBottom);
-		osg::ref_ptr<osg::Node> bottomSide = drawPolygon(vecBottomSide, osg::Vec4d(1, 1, 0, 0.5));
-		group->addChild(bottomSide);
+		osg::Vec3d xyz;
+		convertLatLongToXyz(latMax, lon, xyz, center, radius);
+		vecRight.push_back(xyz);
 	}
+
+	osg::Geode* topArc = drawBaseCurLine(vecTop);
+	osg::Geode* bottomArc = drawBaseCurLine(vecBottom);
+	osg::Geode* leftArc = drawBaseCurLine(vecLeft);
+	osg::Geode* rightArc = drawBaseCurLine(vecRight);
+	group->addChild(topArc);
+	group->addChild(bottomArc);
+	group->addChild(leftArc);
+	group->addChild(rightArc);
 
 	return group.release();
+}
+
+osg::Geode* CDrawer::drawBaseCurLine(std::vector<osg::Vec3d> coord)
+{
+	//绘制线
+	Geode* geoCurLine = new Geode();
+	ref_ptr<Geometry> geomCurLine = new Geometry();
+	ref_ptr<Vec4Array> curLineColor = new Vec4Array();
+	ref_ptr<Vec3Array> curLineArray = new Vec3Array();
+
+	for (int i = 0; i < coord.size(); i++)
+	{
+		curLineArray->push_back(coord[i]);
+	}
+
+	curLineColor->push_back(Vec4d(1, 0, 1, 1));
+	geomCurLine->setVertexArray(curLineArray);
+	geomCurLine->setColorArray(curLineColor);
+	geomCurLine->setColorBinding(Geometry::BIND_OVERALL);
+	geomCurLine->addPrimitiveSet(new DrawArrays(PrimitiveSet::LINE_STRIP, 0, curLineArray->size()));
+	geoCurLine->addDrawable(geomCurLine);
+
+	//设置线样式
+	geoCurLine->setStateSet(makeLineState());
+
+	//设置线宽
+	ref_ptr <LineWidth> LineSize = new LineWidth;
+	LineSize->setWidth(4.5f);
+	geomCurLine->getOrCreateStateSet()->setAttributeAndModes(LineSize.get(), StateAttribute::ON);
+	return geoCurLine;
 }
 
 Geode* CDrawer::drawBasePoint(Vec3d pt, Vec4d clr)
@@ -181,4 +215,16 @@ osg::Geode* CDrawer::drawPolygon(std::vector<osg::Vec3d> coord, osg::Vec4d color
 	geode->setStateSet(stateset);
 
 	return geode.release();
+}
+
+StateSet* CDrawer::makeLineState()
+{
+	//设置样式
+	StateSet* stateset = new StateSet();
+	ref_ptr<LineStipple> linestipple = new LineStipple;
+	linestipple->setFactor(1);
+	stateset->setAttributeAndModes(linestipple, StateAttribute::OVERRIDE | StateAttribute::ON);
+	stateset->setMode(GL_DEPTH_TEST, StateAttribute::OFF);
+	stateset->setMode(GL_LIGHTING, StateAttribute::OFF);
+	return stateset;
 }
