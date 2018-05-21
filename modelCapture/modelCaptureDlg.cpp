@@ -64,24 +64,30 @@ END_MESSAGE_MAP()
 
 CmodelCaptureDlg::CmodelCaptureDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CmodelCaptureDlg::IDD, pParent)
-	, mModelPath(_T(""))
-	, mSnapSavePath(_T(""))
-	, mWidth(0)
-	, mHeight(0)
-	, mR(0)
+	, mUpSideDown(FALSE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+
+	shared_ptr<CSnapPara> temp(new CSnapPara);
+	mSnapPara = temp;
+
+	iCapture = ICaptureFactory::create();
 }
 
 void CmodelCaptureDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Text(pDX, ID_ModelPath, mModelPath);
-	DDX_Text(pDX, ID_SAVE_PATH, mSnapSavePath);
-	DDX_Text(pDX, ID_IMAGE_WIDTH, mWidth);
-	DDX_Text(pDX, ID_IMAGE_HEIGHT, mHeight);
-	DDX_Text(pDX, ID_RADIUS, mR);
-	DDX_Text(pDX, ID_RADIUS2, mInterval);
+	DDX_Text(pDX, ID_ModelPath, mSnapPara->mSceneFileName);
+	DDX_Text(pDX, ID_SAVE_PATH, mSnapPara->mOutFile);
+	DDX_Text(pDX, ID_IMAGE_WIDTH, mSnapPara->mImageWidth);
+	DDX_Text(pDX, ID_IMAGE_HEIGHT, mSnapPara->mImageHeight);
+	DDX_Text(pDX, ID_RADIUS, mSnapPara->mRadius);
+	DDX_Text(pDX, ID_RADIUS2, mSnapPara->mInterval);
+	DDX_Text(pDX, ID_RADIUS3, mSnapPara->mMinLatitude);
+	DDX_Text(pDX, ID_RADIUS4, mSnapPara->mMaxLatitude);
+	DDX_Text(pDX, ID_RADIUS5, mSnapPara->mMinLongitude);
+	DDX_Text(pDX, ID_RADIUS6, mSnapPara->mMaxLongitude);
+	DDX_Check(pDX, IDC_CHECK1, mUpSideDown);
 }
 
 BEGIN_MESSAGE_MAP(CmodelCaptureDlg, CDialogEx)
@@ -92,7 +98,26 @@ BEGIN_MESSAGE_MAP(CmodelCaptureDlg, CDialogEx)
 	ON_BN_CLICKED(IDSNAP_IMAGE, &CmodelCaptureDlg::OnBnClickedImage)
 	ON_BN_CLICKED(ID_PREVIEW, &CmodelCaptureDlg::OnBnClickedPreview)
 	ON_BN_CLICKED(loadSnapSavePath2, &CmodelCaptureDlg::OnBnClickedloadsnapsavepath2)
-END_MESSAGE_MAP()	
+	ON_STN_CLICKED(ID_INTERVAL, &CmodelCaptureDlg::OnStnClickedInterval)
+	ON_EN_CHANGE(ID_RADIUS4, &CmodelCaptureDlg::OnEnChangeRadius4)
+	ON_EN_CHANGE(ID_RADIUS, &CmodelCaptureDlg::OnEnChangeRadius)
+	ON_EN_CHANGE(ID_RADIUS3, &CmodelCaptureDlg::OnEnChangeRadius3)
+	ON_EN_CHANGE(ID_RADIUS5, &CmodelCaptureDlg::OnEnChangeRadius5)
+	ON_EN_CHANGE(ID_RADIUS6, &CmodelCaptureDlg::OnEnChangeRadius6)
+	ON_BN_CLICKED(IDC_BUTTON1, &CmodelCaptureDlg::OnBnClickedButton1)
+	ON_BN_CLICKED(IDC_BUTTON2, &CmodelCaptureDlg::OnBnClickedButton2)
+	ON_BN_CLICKED(IDC_BUTTON3, &CmodelCaptureDlg::OnBnClickedButton3)
+	ON_BN_CLICKED(IDC_BUTTON4, &CmodelCaptureDlg::OnBnClickedButton4)
+	ON_BN_CLICKED(IDC_BUTTON5, &CmodelCaptureDlg::OnBnClickedButton5)
+	ON_BN_CLICKED(IDC_BUTTON6, &CmodelCaptureDlg::OnBnClickedButton6)
+	ON_BN_CLICKED(IDC_BUTTON9, &CmodelCaptureDlg::OnBnClickedButton9)
+	ON_BN_CLICKED(IDC_BUTTON11, &CmodelCaptureDlg::OnBnClickedButton11)
+	ON_BN_CLICKED(IDC_BUTTON7, &CmodelCaptureDlg::OnBnClickedButton7)
+	ON_BN_CLICKED(IDC_BUTTON8, &CmodelCaptureDlg::OnBnClickedButton8)
+	ON_BN_CLICKED(IDC_BUTTON12, &CmodelCaptureDlg::OnBnClickedButton12)
+	ON_BN_CLICKED(IDC_BUTTON10, &CmodelCaptureDlg::OnBnClickedButton10)
+	ON_BN_CLICKED(IDC_CHECK1, &CmodelCaptureDlg::OnBnClickedCheck1)
+END_MESSAGE_MAP()
 
 
 // CmodelCaptureDlg message handlers
@@ -127,10 +152,14 @@ BOOL CmodelCaptureDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	UpdateData(TRUE);
-	mWidth = 3000;
-	mHeight = 3000;
-	mR = 100;
-	mInterval = 45;
+	mSnapPara->mImageWidth = 3000;
+	mSnapPara->mImageHeight = 3000;
+	mSnapPara->mRadius = 100;
+	mSnapPara->mInterval = 45;
+	mSnapPara->mMinLatitude = -45;
+	mSnapPara->mMaxLatitude = 45;
+	mSnapPara->mMinLongitude = -45;
+	mSnapPara->mMaxLongitude = 45;
 
 	UpdateData(FALSE);
 
@@ -212,11 +241,11 @@ void CmodelCaptureDlg::OnBnClickedloadsnapsavepath()
 	::SHGetPathFromIDList(pidl, FullPaths);        //在ITEMIDLIST中得到目录名的整个路径  
 	if (FullPaths[0] != NULL)
 	{
-		mSnapSavePath = FullPaths;
+		mSnapPara->mOutFile = FullPaths;
 		UpdateData(FALSE);
 	}
 
-	mSnapSavePath += _T("\\");
+	mSnapPara->mOutFile += _T("\\");
 
 	UpdateData(FALSE);
 }
@@ -225,23 +254,18 @@ void CmodelCaptureDlg::OnBnClickedloadsnapsavepath()
 void CmodelCaptureDlg::OnBnClickedImage()
 {
 	// TODO: Add your control notification handler code here
-	
-	string modelFileName = mModelPath;
-	string savePath = mSnapSavePath;
-	int imageWidth = mWidth;
-	int imageHeight = mHeight;
-	double radius = mR;
+	UpdateData(TRUE);
 
-	ref_ptr<Node> model = readNodeFile(modelFileName);
-
-	if (model == NULL)
+	if (mSnapPara->mSceneNode == NULL)
 	{
 		return;
 	}
 
-	BoundingSphere bs = model->getBound();
-	Vec3d center = bs.center();
-	Vec3d up(0, 0, 1);
+	string savePath = mSnapPara->mOutFile;
+	int interval = mSnapPara->mInterval;
+	double radius = mSnapPara->mRadius;
+	Vec3d center = mSnapPara->mCenter;
+	Vec3d up = mSnapPara->mUp;
 
 	struct threadFunc
 	{
@@ -255,32 +279,31 @@ void CmodelCaptureDlg::OnBnClickedImage()
 
 	int totalNum = 0;
 
-	for (int latitude = -180; latitude <= 180; latitude = latitude + mInterval)
+	for (int latitude = -180; latitude <= 180; latitude = latitude + interval)
 	{
-		for (int longtitude = -180; longtitude <= 180; longtitude = longtitude + mInterval)
+		for (int longtitude = -180; longtitude <= 180; longtitude = longtitude + interval)
 		{
 			double t = latitude;
 			double p = longtitude;
 
-			if (t == 0)
+			if (t >= mSnapPara->mMinLatitude && t <= mSnapPara->mMaxLatitude && p >= mSnapPara->mMinLongitude && p <= mSnapPara->mMaxLongitude)
 			{
-				continue;
+				totalNum++;
+				double x = radius * cos(t / 180 * PI) * cos(p / 180 * PI) + center.x();
+				double y = radius * cos(t / 180 * PI) * sin(p / 180 * PI) + center.y();
+				double z = radius * sin(t / 180 * PI) + center.z();
+
+				string snapFile = savePath + to_string(latitude) + "_" + to_string(longtitude) + ".jpg";
+				threadPara para;
+				para.x = x;
+				para.y = y;
+				para.z = z;
+				para.snapFile = snapFile;
+				para.up = up;
+
+				int groupNum = totalNum % threadMax;
+				thr[groupNum].vecPara.push_back(para);
 			}
-
-			totalNum++;
-			double x = radius * sin(t / 180 * PI) * cos(p / 180 * PI) + center.x();
-			double y = radius * sin(t / 180 * PI) * sin(p / 180 * PI) + center.y();
-			double z = radius * cos(t / 180 * PI) + center.z();
-
-			string snapFile = savePath + to_string(latitude) + "_" + to_string(longtitude) + ".jpg";
-			threadPara para;
-			para.x = x;
-			para.y = y;
-			para.z = z;
-			para.snapFile = snapFile;
-
-			int groupNum = totalNum % threadMax;
-			thr[groupNum].vecPara.push_back(para);
 		}
 	}
 
@@ -288,17 +311,22 @@ void CmodelCaptureDlg::OnBnClickedImage()
 
 	for (auto func : thr)
 	{
+		ref_ptr<Node> model = mSnapPara->mSceneNode;
 		vector<threadPara> vecPara = func.vecPara;
-		vecThread.push_back(std::thread(&CmodelCaptureDlg::startThread, this, vecPara, modelFileName, imageWidth, imageHeight, center, up));
+		int imageWidth = mSnapPara->mImageWidth;
+		int imageHeight = mSnapPara->mImageHeight;
+		vecThread.push_back(std::thread(&CmodelCaptureDlg::startThread, this, vecPara, model, imageWidth, imageHeight, center, up));
 	}
 
 	std::for_each(vecThread.begin(), vecThread.end(),
 		std::mem_fn(&std::thread::detach));
 
+	UpdateData(FALSE);
+
 	AfxMessageBox(_T("正在生成360度截图"));
 }
 
-void CmodelCaptureDlg::startThread(vector<threadPara> vecPara, string modelFileName, 
+void CmodelCaptureDlg::startThread(vector<threadPara> vecPara, ref_ptr<Node> node, 
 	int imageWidth, int imageHeight, osg::Vec3d center, osg::Vec3d up)
 {
 	shared_ptr<ICapture> iCapture = ICaptureFactory::create();
@@ -310,9 +338,11 @@ void CmodelCaptureDlg::startThread(vector<threadPara> vecPara, string modelFileN
 		double z = para.z;
 		string snapFile = para.snapFile;
 
-		Vec3d up(0, 0, 1);
+		Vec3d up = para.up;
 
-		iCapture->autoCaptureImage(modelFileName, snapFile, imageWidth, imageHeight,
+		ref_ptr<Node> model = dynamic_cast<osg::Node*> (node->clone(osg::CopyOp::DEEP_COPY_ALL));
+
+		iCapture->autoCaptureImage(model, snapFile, imageWidth, imageHeight,
 			x, y, z, center.x(), center.y(), center.z(),
 			up.x(), up.y(), up.z());
 	}
@@ -323,14 +353,13 @@ void CmodelCaptureDlg::OnBnClickedPreview()
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 
-	double radius = mR;
 	/*IViewer->showCaptureSphere(radius);*/
 
 	AfxMessageBox(_T("预览开始，按esc退出"));
 
-	shared_ptr<ICapture> iCapture = ICaptureFactory::create();
-	string sceneFile = mModelPath;
-	iCapture->preview(sceneFile, radius, mInterval);
+	iCapture->preview(mSnapPara);
+
+	iCapture->setPreview();
 }
 
 
@@ -341,10 +370,236 @@ void CmodelCaptureDlg::OnBnClickedloadsnapsavepath2()
 	CFileDialog dialog(TRUE, NULL, NULL, OFN_HIDEREADONLY, (LPCTSTR)_TEXT("model file (*.osgb, *.obj...)|*.*||"), NULL);
 	if (dialog.DoModal() == IDOK)
 	{
-		mModelPath = dialog.GetPathName();
-
+		mSnapPara->mSceneFileName = dialog.GetPathName();
+		string sceneFileName = mSnapPara->mSceneFileName;
+		mSnapPara->mSceneNode = osgDB::readNodeFile(sceneFileName);
 		
+		mSnapPara->mCenter = mSnapPara->mSceneNode->getBound().center();
 	}
 
 	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnStnClickedInterval()	
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+
+	if (mSnapPara->mInterval == 0)
+	{
+		return;
+	}
+
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnEnChangeRadius4()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+	UpdateData(TRUE);
+	// TODO:  Add your control notification handler code here
+	iCapture->refresh(mSnapPara);
+
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnEnChangeRadius()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+	UpdateData(TRUE);
+	iCapture->refresh(mSnapPara);
+
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnEnChangeRadius3()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+	UpdateData(TRUE);
+	iCapture->refresh(mSnapPara);
+
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnEnChangeRadius5()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+	UpdateData(TRUE);
+	iCapture->refresh(mSnapPara);
+
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnEnChangeRadius6()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+	UpdateData(TRUE);
+	iCapture->refresh(mSnapPara);
+
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton1()
+{
+	// TODO: Add your control notification handler code 
+	UpdateData(TRUE);
+	mSnapPara->mRadius--;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton2()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mRadius++;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton3()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mInterval--;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton4()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mInterval++;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton5()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMinLatitude--;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton6()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMinLatitude++;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton9()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMaxLatitude--;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton11()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMaxLatitude++;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton7()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMinLongitude--;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton8()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMinLongitude++;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton12()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMaxLongitude--;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton10()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mMaxLongitude++;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedCheck1()
+{
+	// TODO: Add your control notification handler code here
+	if (mUpSideDown == TRUE)
+	{
+		mSnapPara->mUp = Vec3d(0, 0, 1);
+	}
+	else
+	{
+		mSnapPara->mUp = Vec3d(0, 0, -1);
+	}
 }

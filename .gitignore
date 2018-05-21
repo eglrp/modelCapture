@@ -16,3 +16,5 @@
 modelCapture.v12.suo
 *.suo
 *.jpg
+x64/Release/modelCapture.lib
+x64/Release/modelCapture.exp
