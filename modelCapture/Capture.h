@@ -49,19 +49,22 @@ namespace capture
 
 		virtual void setPreview();
 
-	protected:
 		void drawGraphic(std::shared_ptr<CSnapPara> para, osg::ref_ptr<osg::Group> root);
+	
+		/*
+		** brief 清除图形
+		** param root 根节点
+		*/
+		void clearGraphic(osg::ref_ptr<osg::Group> root);
+
+
+	protected:
 		/*
 		** brief 绘制相机位置
 		** param para 界面参数
 		*/
 		osg::Node* drawCameraPosition(std::shared_ptr<CSnapPara> para);
 
-		/*
-		** brief 清除图形
-		** param root 根节点
-		*/
-		void clearGraphic(osg::ref_ptr<osg::Group> root);
 
 	protected:
 		/*

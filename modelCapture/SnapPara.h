@@ -40,6 +40,14 @@ namespace capture
 		double mMaxLongitude = 0;
 
 		osg::Vec3d mUp = osg::Vec3d(0, 0, 1);
+
+		int mSelIndex = -1;
+
+		double pitch = 0;
+
+		double yaw = 0;
+		 
+		double roll = 0;
 	};
 
 }

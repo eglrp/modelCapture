@@ -19,9 +19,10 @@ vector<Vec3d> CSnapPara::calAllCameraPoint()
 {
 	vector<Vec3d> vecCameraPos;
 
-	for (int latitude = -180; latitude <= 180; latitude = latitude + mInterval)
+	
+	for (int latitude = -360; latitude <= 360; latitude = latitude + mInterval)
 	{
-		for (int longtitude = -180; longtitude <= 180; longtitude = longtitude + mInterval)
+		for (int longtitude = -360; longtitude <= 360; longtitude = longtitude + mInterval)
 		{
 			double t = latitude;
 			double p = longtitude;
@@ -34,7 +35,7 @@ vector<Vec3d> CSnapPara::calAllCameraPoint()
 
 				vecCameraPos.push_back(Vec3d(x, y, z));
 			}
-		
+
 		}
 	}
 

@@ -93,7 +93,7 @@ bool CPickHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 						break;
 					}
 
-					ref_ptr<Group> highLightGroup = root->getChild(3)->asGroup();
+					ref_ptr<Group> highLightGroup = root->getChild(4)->asGroup();
 					clearGroup(highLightGroup);
 
 					//如果在范围内, 切换视图
