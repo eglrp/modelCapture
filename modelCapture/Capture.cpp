@@ -399,7 +399,7 @@ void CCapture::previewImplement(shared_ptr<CSnapPara> para)
 	Vec3d center = para->mCenter;
 	Vec3d up = para->mUp;
 	osg::ref_ptr<osg::Node> model = para->mSceneNode;
-	osg::ref_ptr<osg::Node> snapNode = dynamic_cast<osg::Node*> (model->clone(osg::CopyOp::DEEP_COPY_ALL));
+	osg::ref_ptr<osg::Node> snapNode = model;
 
 	mRoot = new osg::Group;
 	osg::ref_ptr<osg::Group> sceneGroup = new osg::Group;

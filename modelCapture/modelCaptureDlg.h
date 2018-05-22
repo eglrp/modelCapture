@@ -97,4 +97,20 @@ public:
 	afx_msg void OnBnClickedRadio5();
 	afx_msg void OnBnClickedRadio6();
 	int mManualSetMain = 0;
+	double mPitch;
+	double mYaw;
+	double mRoll;
+	afx_msg void OnEnChangeRadius7();
+	afx_msg void OnEnChangeRadius8();
+	afx_msg void OnEnChangeRadius9();
+	afx_msg void OnBnClickedButton14();
+	afx_msg void OnBnClickedButton13();
+
+protected:
+	void rotateModel(double pitch, double yaw, double roll);
+public:
+	afx_msg void OnBnClickedButton15();
+	afx_msg void OnBnClickedButton16();
+	afx_msg void OnBnClickedButton17();
+	afx_msg void OnBnClickedButton18();
 };

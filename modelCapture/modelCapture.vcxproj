@@ -195,6 +195,7 @@
     <ClInclude Include="IDrawer.h" />
     <ClInclude Include="modelCapture.h" />
     <ClInclude Include="modelCaptureDlg.h" />
+    <ClInclude Include="OsgMinusVisitor.h" />
     <ClInclude Include="PickHandler.h" />
     <ClInclude Include="qcomm.h" />
     <ClInclude Include="Resource.h" />
@@ -211,6 +212,7 @@
     <ClCompile Include="IDrawer.cpp" />
     <ClCompile Include="modelCapture.cpp" />
     <ClCompile Include="modelCaptureDlg.cpp" />
+    <ClCompile Include="OsgMinusVisitor.cpp" />
     <ClCompile Include="PickHandler.cpp" />
     <ClCompile Include="qcomm.cpp" />
     <ClCompile Include="SnapPara.cpp" />
