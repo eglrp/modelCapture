@@ -57,9 +57,6 @@
     <ClInclude Include="SnapPara.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AdjustBorderEvent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="modelCapture.cpp">
@@ -93,9 +90,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SnapPara.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AdjustBorderEvent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

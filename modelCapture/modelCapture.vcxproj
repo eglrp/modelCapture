@@ -187,7 +187,6 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AdjustBorderEvent.h" />
     <ClInclude Include="Capture.h" />
     <ClInclude Include="Drawer.h" />
     <ClInclude Include="EmptyCameraHandler.h" />
@@ -203,7 +202,6 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AdjustBorderEvent.cpp" />
     <ClCompile Include="Capture.cpp" />
     <ClCompile Include="Drawer.cpp" />
     <ClCompile Include="EmptyCameraHandler.cpp" />

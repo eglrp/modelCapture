@@ -43,17 +43,12 @@
 #include "PickHandler.h"
 #include "IDrawer.h"
 #include "SnapPara.h"
-#include <mutex>
-
-#include "AdjustBorderEvent.h"
 
 using namespace std;
 using namespace osg;
 using namespace osgGA;
 using namespace osgDB;
 using namespace capture;
-
-std::mutex mut;
 
 /** Helper class*/
 template<class T>
@@ -198,37 +193,6 @@ public:
 	bool _cullOnly;
 };
 
-
-class CChangeColorNodeVisitor : public osg::NodeVisitor
-{
-public:
-	CChangeColorNodeVisitor() :osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN)
-	{
-
-	}
-
-protected:
-	virtual void apply(osg::Geode& geode)
-	{
-		for (int i = 0; i < geode.getNumDrawables(); i++)
-		{
-			osg::ref_ptr<osg::Geometry> geom = dynamic_cast<osg::Geometry*> (geode.getDrawable(i));
-
-			if (geom)
-			{
-				osg::ref_ptr<osg::Vec4Array> curLineColor = new osg::Vec4Array();
-				curLineColor->push_back(osg::Vec4d(0, 1, 1, 1));
-
-				geom->setColorArray(curLineColor);
-				geom->setColorBinding(osg::Geometry::BIND_OVERALL);
-			}
-		}
-
-
-	}
-
-
-};
 
 
 CCapture::CCapture()
@@ -406,12 +370,10 @@ void CCapture::previewImplement(shared_ptr<CSnapPara> para)
 	osg::ref_ptr<osg::Group> sphereGroup = new osg::Group;
 	osg::ref_ptr<osg::Group> cameraPointGroup = new osg::Group;
 	osg::ref_ptr<osg::Group> highLightPointGroup = new osg::Group;
-	osg::ref_ptr<osg::Group> limitGroup = new osg::Group;
 
 	mRoot->addChild(sceneGroup);
 	mRoot->addChild(sphereGroup);
 	mRoot->addChild(cameraPointGroup);
-	mRoot->addChild(limitGroup);
 	mRoot->addChild(highLightPointGroup);
 
 	//加载场景
@@ -452,8 +414,8 @@ void CCapture::previewImplement(shared_ptr<CSnapPara> para)
 		view1->setName("main view");
 		view1->setSceneData(mRoot);
 		view1->getCamera()->setGraphicsContext(gc.get());
-		view1->setCameraManipulator(new osgGA::TerrainManipulator);
-
+		view1->setCameraManipulator(new osgGA::TrackballManipulator);
+		view1->addEventHandler(new osgViewer::WindowSizeHandler);
 		view1->getCamera()->setViewport(new osg::Viewport(0, 0, traits->width, traits->height));
 		//禁用裁剪小细节
 		osg::CullStack::CullingMode cullingMode = view1->getCamera()->getCullingMode();
@@ -463,9 +425,6 @@ void CCapture::previewImplement(shared_ptr<CSnapPara> para)
 
 		osg::ref_ptr<CPickHandler> pickHandler = new CPickHandler(emptyCamera, para);
 		view1->addEventHandler(pickHandler);
-
-		/*	osg::ref_ptr<CAdjustBorderEvent> adjustHandler = new CAdjustBorderEvent(para, mRoot, this);
-			view1->addEventHandler(adjustHandler);*/
 	}
 	
 	{
@@ -497,8 +456,6 @@ void CCapture::previewImplement(shared_ptr<CSnapPara> para)
 
 	while (!viewer->done())
 	{
-		std::lock_guard<std::mutex> guard(mut);
-
 		viewer->frame();
 	}
 
@@ -513,7 +470,6 @@ void CCapture::refresh(shared_ptr<CSnapPara> para)
 		return;
 	}
 
-	std::lock_guard<std::mutex> guard(mut);
 	clearGraphic(mRoot);
 	drawGraphic(para, mRoot);
 }
@@ -527,7 +483,6 @@ void CCapture::drawGraphic(std::shared_ptr<CSnapPara> para, osg::ref_ptr<Group> 
 {
 	osg::ref_ptr<osg::Group> sphereGroup = root->getChild(1)->asGroup();
 	osg::ref_ptr<osg::Group> cameraPointGroup = root->getChild(2)->asGroup();
-	osg::ref_ptr<osg::Group> limitGroup = root->getChild(3)->asGroup();
 
 
 	shared_ptr<IDrawer> iDrawer = IDrawerFactory::create();
@@ -549,33 +504,7 @@ void CCapture::drawGraphic(std::shared_ptr<CSnapPara> para, osg::ref_ptr<Group> 
 
 	//绘制半椎体
 	ref_ptr<Node> fan = iDrawer->drawFan(center, radius, latMin, latMax, longMin, longMax);
-	limitGroup->addChild(fan);
-
-
-	osg::ref_ptr<osg::Group> highLightGroup = mRoot->getChild(4)->asGroup();
-	osg::ref_ptr<osg::Group> limitArea = limitGroup->getChild(0)->asGroup();
-
-	if (limitArea->getNumChildren() == 0)
-	{
-		return;
-	}
-
-	if (para->mSelIndex == -1)
-	{
-		return;
-	}
-
-	int selIndex = para->mSelIndex;
-	osg::ref_ptr<osg::Node> curLine = limitArea->getChild(selIndex);
-	osg::ref_ptr<osg::Node> deepCopyCurline = dynamic_cast<osg::Node*> (curLine->clone(osg::CopyOp::DEEP_COPY_ALL));
-
-	CChangeColorNodeVisitor ive;
-	deepCopyCurline->accept(ive);
-
-	int numChild = highLightGroup->getNumChildren();
-	highLightGroup->removeChild(0, numChild);
-
-	highLightGroup->addChild(deepCopyCurline);
+	sphereGroup->addChild(fan);
 }
 
 
@@ -583,16 +512,12 @@ void CCapture::clearGraphic(osg::ref_ptr<Group> root)
 {
 	osg::ref_ptr<osg::Group> sphereGroup = root->getChild(1)->asGroup();
 	osg::ref_ptr<osg::Group> cameraPointGroup = root->getChild(2)->asGroup();
-	osg::ref_ptr<osg::Group> limitGroup = root->getChild(3)->asGroup();
 
 	int numSphereChild = sphereGroup->getNumChildren();
 	sphereGroup->removeChildren(0, numSphereChild);
 
 	int numCameraChild = cameraPointGroup->getNumChildren();
 	cameraPointGroup->removeChildren(0, numCameraChild);
-
-	int numLimitChild = limitGroup->getNumChildren();
-	limitGroup->removeChildren(0, numLimitChild);
 }
 
 Node* CCapture::drawCameraPosition(shared_ptr<CSnapPara> para)

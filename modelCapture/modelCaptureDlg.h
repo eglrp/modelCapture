@@ -83,18 +83,4 @@ public:
 	afx_msg void OnBnClickedButton10();
 	afx_msg void OnBnClickedCheck1();
 	BOOL mUpSideDown;
-
-protected:
-	bool judgeLatOutSide();
-
-	bool judgeLonOutSide();
-
-public:
-	afx_msg void OnBnClickedRadio1();
-	afx_msg void OnBnClickedRadio2();
-	afx_msg void OnBnClickedRadio3();
-	afx_msg void OnBnClickedRadio4();
-	afx_msg void OnBnClickedRadio5();
-	afx_msg void OnBnClickedRadio6();
-	int mManualSetMain = 0;
 };

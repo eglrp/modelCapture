@@ -13,7 +13,6 @@
 #include <osg/Node>
 #include <osg/BoundingSphere>
 #include <thread>
-#include <osg/MatrixTransform>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -25,12 +24,7 @@ using namespace std;
 using namespace osg;
 using namespace osgDB;
 
-osg::Quat HPRToQuat(double heading, double pitch, double roll, osg::Vec3d center)
-{
-	osg::Quat q(roll, osg::Vec3d(center.x(), 1.0, center.z()), pitch, osg::Vec3d(1.0, center.y(), center.z()),
-		heading, osg::Vec3d(center.x(), center.y(), 1.0));
-	return q;
-}
+
 
 
 // CAboutDlg dialog used for App About
@@ -71,7 +65,6 @@ END_MESSAGE_MAP()
 CmodelCaptureDlg::CmodelCaptureDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CmodelCaptureDlg::IDD, pParent)
 	, mUpSideDown(FALSE)
-	, mManualSetMain(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
@@ -95,7 +88,6 @@ void CmodelCaptureDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, ID_RADIUS5, mSnapPara->mMinLongitude);
 	DDX_Text(pDX, ID_RADIUS6, mSnapPara->mMaxLongitude);
 	DDX_Check(pDX, IDC_CHECK1, mUpSideDown);
-	DDX_Check(pDX, IDC_CHECK2, mManualSetMain);
 }
 
 BEGIN_MESSAGE_MAP(CmodelCaptureDlg, CDialogEx)
@@ -125,12 +117,6 @@ BEGIN_MESSAGE_MAP(CmodelCaptureDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON12, &CmodelCaptureDlg::OnBnClickedButton12)
 	ON_BN_CLICKED(IDC_BUTTON10, &CmodelCaptureDlg::OnBnClickedButton10)
 	ON_BN_CLICKED(IDC_CHECK1, &CmodelCaptureDlg::OnBnClickedCheck1)
-	ON_BN_CLICKED(IDC_RADIO1, &CmodelCaptureDlg::OnBnClickedRadio1)
-	ON_BN_CLICKED(IDC_RADIO2, &CmodelCaptureDlg::OnBnClickedRadio2)
-	ON_BN_CLICKED(IDC_RADIO3, &CmodelCaptureDlg::OnBnClickedRadio3)
-	ON_BN_CLICKED(IDC_RADIO4, &CmodelCaptureDlg::OnBnClickedRadio4)
-	ON_BN_CLICKED(IDC_RADIO5, &CmodelCaptureDlg::OnBnClickedRadio5)
-	ON_BN_CLICKED(IDC_RADIO6, &CmodelCaptureDlg::OnBnClickedRadio6)
 END_MESSAGE_MAP()
 
 
@@ -174,7 +160,6 @@ BOOL CmodelCaptureDlg::OnInitDialog()
 	mSnapPara->mMaxLatitude = 45;
 	mSnapPara->mMinLongitude = -45;
 	mSnapPara->mMaxLongitude = 45;
-
 
 	UpdateData(FALSE);
 
@@ -387,12 +372,7 @@ void CmodelCaptureDlg::OnBnClickedloadsnapsavepath2()
 	{
 		mSnapPara->mSceneFileName = dialog.GetPathName();
 		string sceneFileName = mSnapPara->mSceneFileName;
-
-		osg::ref_ptr<osg::MatrixTransform> trans = new osg::MatrixTransform;
-		osg::ref_ptr<osg::Node> node = osgDB::readNodeFile(sceneFileName);
-		trans->addChild(node);
-
-		mSnapPara->mSceneNode = trans;
+		mSnapPara->mSceneNode = osgDB::readNodeFile(sceneFileName);
 		
 		mSnapPara->mCenter = mSnapPara->mSceneNode->getBound().center();
 	}
@@ -493,7 +473,6 @@ void CmodelCaptureDlg::OnEnChangeRadius6()
 void CmodelCaptureDlg::OnBnClickedButton1()
 {
 	// TODO: Add your control notification handler code 
-	
 	UpdateData(TRUE);
 	mSnapPara->mRadius--;
 	iCapture->refresh(mSnapPara);
@@ -504,7 +483,6 @@ void CmodelCaptureDlg::OnBnClickedButton1()
 void CmodelCaptureDlg::OnBnClickedButton2()
 {
 	// TODO: Add your control notification handler code here
-
 	UpdateData(TRUE);
 	mSnapPara->mRadius++;
 	iCapture->refresh(mSnapPara);
@@ -515,7 +493,6 @@ void CmodelCaptureDlg::OnBnClickedButton2()
 void CmodelCaptureDlg::OnBnClickedButton3()
 {
 	// TODO: Add your control notification handler code here
-
 	UpdateData(TRUE);
 	mSnapPara->mInterval--;
 	iCapture->refresh(mSnapPara);
@@ -526,7 +503,6 @@ void CmodelCaptureDlg::OnBnClickedButton3()
 void CmodelCaptureDlg::OnBnClickedButton4()
 {
 	// TODO: Add your control notification handler code here
-
 	UpdateData(TRUE);
 	mSnapPara->mInterval++;
 	iCapture->refresh(mSnapPara);
@@ -537,7 +513,6 @@ void CmodelCaptureDlg::OnBnClickedButton4()
 void CmodelCaptureDlg::OnBnClickedButton5()
 {
 	// TODO: Add your control notification handler code here
-
 	UpdateData(TRUE);
 	mSnapPara->mMinLatitude--;
 	iCapture->refresh(mSnapPara);
@@ -548,11 +523,6 @@ void CmodelCaptureDlg::OnBnClickedButton5()
 void CmodelCaptureDlg::OnBnClickedButton6()
 {
 	// TODO: Add your control notification handler code here
-	if (judgeLatOutSide() == false)
-	{
-		return;
-	}
-
 	UpdateData(TRUE);
 	mSnapPara->mMinLatitude++;
 	iCapture->refresh(mSnapPara);
@@ -563,12 +533,6 @@ void CmodelCaptureDlg::OnBnClickedButton6()
 void CmodelCaptureDlg::OnBnClickedButton9()
 {
 	// TODO: Add your control notification handler code here
-	if (judgeLatOutSide() == false)
-	{
-		return;
-	}
-
-
 	UpdateData(TRUE);
 	mSnapPara->mMaxLatitude--;
 	iCapture->refresh(mSnapPara);
@@ -579,7 +543,6 @@ void CmodelCaptureDlg::OnBnClickedButton9()
 void CmodelCaptureDlg::OnBnClickedButton11()
 {
 	// TODO: Add your control notification handler code here
-
 	UpdateData(TRUE);
 	mSnapPara->mMaxLatitude++;
 	iCapture->refresh(mSnapPara);
@@ -600,11 +563,6 @@ void CmodelCaptureDlg::OnBnClickedButton7()
 void CmodelCaptureDlg::OnBnClickedButton8()
 {
 	// TODO: Add your control notification handler code here
-	if (judgeLonOutSide() == false)
-	{
-		return;
-	}
-
 	UpdateData(TRUE);
 	mSnapPara->mMinLongitude++;
 	iCapture->refresh(mSnapPara);
@@ -616,11 +574,6 @@ void CmodelCaptureDlg::OnBnClickedButton8()
 void CmodelCaptureDlg::OnBnClickedButton12()
 {
 	// TODO: Add your control notification handler code here
-	if (judgeLonOutSide() == false)
-	{
-		return;
-	}
-
 	UpdateData(TRUE);
 	mSnapPara->mMaxLongitude--;
 	iCapture->refresh(mSnapPara);
@@ -641,7 +594,6 @@ void CmodelCaptureDlg::OnBnClickedButton10()
 void CmodelCaptureDlg::OnBnClickedCheck1()
 {
 	// TODO: Add your control notification handler code here
-
 	if (mUpSideDown == TRUE)
 	{
 		mSnapPara->mUp = Vec3d(0, 0, 1);
@@ -650,109 +602,4 @@ void CmodelCaptureDlg::OnBnClickedCheck1()
 	{
 		mSnapPara->mUp = Vec3d(0, 0, -1);
 	}
-}
-
-bool CmodelCaptureDlg::judgeLatOutSide()
-{
-	if (mSnapPara->mMinLatitude >= mSnapPara->mMaxLatitude)
-	{
-		return false;
-	}
-
-	return true;
-}
-
-bool CmodelCaptureDlg::judgeLonOutSide()
-{
-	if (mSnapPara->mMinLongitude >= mSnapPara->mMaxLongitude)
-	{
-		return false;
-	}
-
-	return true;
-}
-
-void CmodelCaptureDlg::OnBnClickedRadio1()
-{
-	// TODO: Add your control notification handler code here
-	UpdateData(TRUE);
-	mSnapPara->mMaxLatitude = 90;
-	mSnapPara->mMinLatitude = 0;
-	mSnapPara->mMinLongitude = -180;
-	mSnapPara->mMaxLongitude = 180;
-
-	iCapture->refresh(mSnapPara);
-	UpdateData(FALSE);
-}
-
-
-void CmodelCaptureDlg::OnBnClickedRadio2()
-{
-	// TODO: Add your control notification handler code here
-	UpdateData(TRUE);
-	mSnapPara->mMaxLatitude = 0;
-	mSnapPara->mMinLatitude = -90;
-	mSnapPara->mMinLongitude = -180;
-	mSnapPara->mMaxLongitude = 180;
-
-	iCapture->refresh(mSnapPara);
-	UpdateData(FALSE);
-}
-
-
-
-
-void CmodelCaptureDlg::OnBnClickedRadio3()
-{
-	// TODO: Add your control notification handler code here
-	UpdateData(TRUE);
-	mSnapPara->mMaxLatitude = 90;
-	mSnapPara->mMinLatitude = -90;
-	mSnapPara->mMinLongitude = -180;
-	mSnapPara->mMaxLongitude = 0;
-
-	iCapture->refresh(mSnapPara);
-	UpdateData(FALSE);
-}
-
-
-void CmodelCaptureDlg::OnBnClickedRadio4()
-{
-	// TODO: Add your control notification handler code here
-	UpdateData(TRUE);
-	mSnapPara->mMaxLatitude = 90;
-	mSnapPara->mMinLatitude = -90;
-	mSnapPara->mMinLongitude = 0;
-	mSnapPara->mMaxLongitude = 180;
-
-	iCapture->refresh(mSnapPara);
-	UpdateData(FALSE);
-}
-
-
-void CmodelCaptureDlg::OnBnClickedRadio5()
-{
-	// TODO: Add your control notification handler code here
-	UpdateData(TRUE);
-	mSnapPara->mMaxLatitude = 90;
-	mSnapPara->mMinLatitude = -90;
-	mSnapPara->mMinLongitude = -90;
-	mSnapPara->mMaxLongitude = 90;
-
-	iCapture->refresh(mSnapPara);
-	UpdateData(FALSE);
-}
-
-
-void CmodelCaptureDlg::OnBnClickedRadio6()
-{
-	// TODO: Add your control notification handler code here
-	UpdateData(TRUE);
-	mSnapPara->mMaxLatitude = 90;
-	mSnapPara->mMinLatitude = -90;
-	mSnapPara->mMinLongitude = 90;
-	mSnapPara->mMaxLongitude = 270;
-
-	iCapture->refresh(mSnapPara);
-	UpdateData(FALSE);
 }
