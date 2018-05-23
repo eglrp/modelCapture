@@ -60,9 +60,6 @@
     <ClInclude Include="AdjustBorderEvent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OsgMinusVisitor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="modelCapture.cpp">
@@ -99,9 +96,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AdjustBorderEvent.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OsgMinusVisitor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
