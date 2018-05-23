@@ -13,6 +13,8 @@
 #include <osg/Node>
 #include <osg/BoundingSphere>
 #include <thread>
+#include "osg/MatrixTransform"
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -60,11 +62,21 @@ END_MESSAGE_MAP()
 
 // CmodelCaptureDlg dialog
 
+osg::Quat HPRToQuat(double heading, double pitch, double roll)
+{
+	osg::Quat q(roll, osg::Vec3d(0, 1.0, 0), pitch, osg::Vec3d(1.0, 0, 0),
+		heading, osg::Vec3d(0, 0, 1.0));
+	return q;
+}
+
 
 
 CmodelCaptureDlg::CmodelCaptureDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CmodelCaptureDlg::IDD, pParent)
 	, mUpSideDown(FALSE)
+	, mPitch(0)
+	, mYaw(0)
+	, mRoll(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
@@ -88,6 +100,9 @@ void CmodelCaptureDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, ID_RADIUS5, mSnapPara->mMinLongitude);
 	DDX_Text(pDX, ID_RADIUS6, mSnapPara->mMaxLongitude);
 	DDX_Check(pDX, IDC_CHECK1, mUpSideDown);
+	DDX_Text(pDX, ID_RADIUS7, mPitch);
+	DDX_Text(pDX, ID_RADIUS8, mYaw);
+	DDX_Text(pDX, ID_RADIUS9, mRoll);
 }
 
 BEGIN_MESSAGE_MAP(CmodelCaptureDlg, CDialogEx)
@@ -117,6 +132,15 @@ BEGIN_MESSAGE_MAP(CmodelCaptureDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON12, &CmodelCaptureDlg::OnBnClickedButton12)
 	ON_BN_CLICKED(IDC_BUTTON10, &CmodelCaptureDlg::OnBnClickedButton10)
 	ON_BN_CLICKED(IDC_CHECK1, &CmodelCaptureDlg::OnBnClickedCheck1)
+	ON_EN_CHANGE(ID_RADIUS7, &CmodelCaptureDlg::OnEnChangeRadius7)
+	ON_EN_CHANGE(ID_RADIUS8, &CmodelCaptureDlg::OnEnChangeRadius8)
+	ON_EN_CHANGE(ID_RADIUS9, &CmodelCaptureDlg::OnEnChangeRadius9)
+	ON_BN_CLICKED(IDC_BUTTON13, &CmodelCaptureDlg::OnBnClickedButton13)
+	ON_BN_CLICKED(IDC_BUTTON14, &CmodelCaptureDlg::OnBnClickedButton14)
+	ON_BN_CLICKED(IDC_BUTTON15, &CmodelCaptureDlg::OnBnClickedButton15)
+	ON_BN_CLICKED(IDC_BUTTON16, &CmodelCaptureDlg::OnBnClickedButton16)
+	ON_BN_CLICKED(IDC_BUTTON17, &CmodelCaptureDlg::OnBnClickedButton17)
+	ON_BN_CLICKED(IDC_BUTTON18, &CmodelCaptureDlg::OnBnClickedButton18)
 END_MESSAGE_MAP()
 
 
@@ -372,9 +396,14 @@ void CmodelCaptureDlg::OnBnClickedloadsnapsavepath2()
 	{
 		mSnapPara->mSceneFileName = dialog.GetPathName();
 		string sceneFileName = mSnapPara->mSceneFileName;
-		mSnapPara->mSceneNode = osgDB::readNodeFile(sceneFileName);
-		
-		mSnapPara->mCenter = mSnapPara->mSceneNode->getBound().center();
+
+		osg::ref_ptr<osg::Node> model = osgDB::readNodeFile(sceneFileName);
+		osg::Vec3d center = model->getBound().center();
+		osg::ref_ptr<osg::MatrixTransform> trans = new osg::MatrixTransform;
+		trans->addChild(model);
+
+		mSnapPara->mSceneNode = trans;
+		mSnapPara->mCenter = center;
 	}
 
 	UpdateData(FALSE);
@@ -602,4 +631,129 @@ void CmodelCaptureDlg::OnBnClickedCheck1()
 	{
 		mSnapPara->mUp = Vec3d(0, 0, -1);
 	}
+}
+
+
+void CmodelCaptureDlg::OnEnChangeRadius7()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+	UpdateData(TRUE);
+	rotateModel(mPitch, mYaw, mRoll);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnEnChangeRadius8()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+	UpdateData(TRUE);
+	rotateModel(mPitch, mYaw, mRoll);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnEnChangeRadius9()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+	UpdateData(TRUE);
+	rotateModel(mPitch, mYaw, mRoll);
+	UpdateData(FALSE);
+}
+
+void CmodelCaptureDlg::rotateModel(double pitch, double yaw, double roll)
+{
+	double p = pitch / 180.0 * PI;
+	double y = yaw / 180.0 * PI;
+	double r = roll / 180.0 * PI;
+
+	osg::Quat quat = HPRToQuat(p, y, r);
+	osg::Vec3d center = mSnapPara->mCenter;
+	osg::ref_ptr<osg::MatrixTransform> mTrans = dynamic_cast<osg::MatrixTransform*> (mSnapPara->mSceneNode->asTransform());
+
+	if (mTrans)
+	{
+		osg::Matrix reverseTransMat;
+		reverseTransMat.setTrans(center * (-1));
+		osg::Matrix rotMat;
+		rotMat.setRotate(quat);
+		osg::Matrix transMat;
+		transMat.setTrans(center);
+
+		osg::Matrix mat = reverseTransMat * rotMat * transMat;
+		mTrans->setMatrix(mat);
+	}
+}
+
+void CmodelCaptureDlg::OnBnClickedButton13()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mPitch--;
+	rotateModel(mPitch, mYaw, mRoll);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton14()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mPitch++;
+	rotateModel(mPitch, mYaw, mRoll);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton15()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mYaw--;
+	rotateModel(mPitch, mYaw, mRoll);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton16()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mYaw++;
+	rotateModel(mPitch, mYaw, mRoll);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton17()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mRoll--;
+	rotateModel(mPitch, mYaw, mRoll);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton18()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mRoll++;
+	rotateModel(mPitch, mYaw, mRoll);
+	UpdateData(FALSE);
 }

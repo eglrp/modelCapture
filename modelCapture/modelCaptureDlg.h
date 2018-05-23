@@ -83,4 +83,22 @@ public:
 	afx_msg void OnBnClickedButton10();
 	afx_msg void OnBnClickedCheck1();
 	BOOL mUpSideDown;
+	afx_msg void OnEnChangeRadius7();
+	afx_msg void OnEnChangeRadius8();
+	afx_msg void OnEnChangeRadius9();
+	afx_msg void OnBnClickedButton13();
+	afx_msg void OnBnClickedButton14();
+
+	double mPitch;
+	double mYaw;
+	double mRoll;
+	
+
+	void rotateModel(double pitch, double yaw, double roll);
+	
+	
+	afx_msg void OnBnClickedButton15();
+	afx_msg void OnBnClickedButton16();
+	afx_msg void OnBnClickedButton17();
+	afx_msg void OnBnClickedButton18();
 };
