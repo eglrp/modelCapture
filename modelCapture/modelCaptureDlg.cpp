@@ -398,6 +398,7 @@ void CmodelCaptureDlg::OnBnClickedloadsnapsavepath2()
 		string sceneFileName = mSnapPara->mSceneFileName;
 
 		osg::ref_ptr<osg::Node> model = osgDB::readNodeFile(sceneFileName);
+		model->getOrCreateStateSet()->setMode(GL_LIGHTING, 0x2);
 		osg::Vec3d center = model->getBound().center();
 		osg::ref_ptr<osg::MatrixTransform> trans = new osg::MatrixTransform;
 		trans->addChild(model);
