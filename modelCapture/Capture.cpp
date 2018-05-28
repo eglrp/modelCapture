@@ -50,6 +50,8 @@ using namespace osgGA;
 using namespace osgDB;
 using namespace capture;
 
+std::mutex mut;
+
 /** Helper class*/
 template<class T>
 class FindTopMostNodeOfTypeVisitor : public NodeVisitor
@@ -456,6 +458,7 @@ void CCapture::previewImplement(shared_ptr<CSnapPara> para)
 
 	while (!viewer->done())
 	{
+		lock_guard<mutex> gurad(mut);
 		viewer->frame();
 	}
 
@@ -469,6 +472,8 @@ void CCapture::refresh(shared_ptr<CSnapPara> para)
 	{
 		return;
 	}
+
+	lock_guard<mutex> gurad(mut);
 
 	clearGraphic(mRoot);
 	drawGraphic(para, mRoot);

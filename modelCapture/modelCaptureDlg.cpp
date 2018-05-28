@@ -554,7 +554,7 @@ void CmodelCaptureDlg::OnBnClickedButton6()
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
-	mSnapPara->mMinLatitude++;
+	mSnapPara->mMinLongitude++;
 	iCapture->refresh(mSnapPara);
 	UpdateData(FALSE);
 }
@@ -594,7 +594,7 @@ void CmodelCaptureDlg::OnBnClickedButton8()
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
-	mSnapPara->mMinLongitude++;
+	mSnapPara->mMinLatitude++;
 	iCapture->refresh(mSnapPara);
 	UpdateData(FALSE);
 
