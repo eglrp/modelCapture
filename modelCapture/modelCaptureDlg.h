@@ -9,6 +9,7 @@
 #include <osg/Vec3d>
 #include "afxwin.h"
 #include "SnapPara.h"
+#include <osg/MatrixTransform>
 
 namespace capture
 {
@@ -92,6 +93,8 @@ public:
 	double mPitch;
 	double mYaw;
 	double mRoll;
+
+	osg::Matrix mCorrectMat;
 	
 
 	void rotateModel(double pitch, double yaw, double roll);
@@ -101,4 +104,24 @@ public:
 	afx_msg void OnBnClickedButton16();
 	afx_msg void OnBnClickedButton17();
 	afx_msg void OnBnClickedButton18();
+
+protected:
+	/*
+	** brief 从文件读取面部特征点
+	** param vecXyz 特征点编号及坐标
+	*/
+
+	bool readFaceKeyPoints(std::vector<std::pair<int, osg::Vec3d>> &vecXyz);
+	
+	/*
+	** brief 根据特征点校正模型，使得面部中心在（0，0，0），头部向上方向（0， 0， 1），面部正面方向（0， -1，0）
+	** param vecXyz 特征点编号及坐标
+	*/
+	bool correctModel(std::vector<std::pair<int, osg::Vec3d>> vecXyz, osg::ref_ptr<osg::MatrixTransform> trans);
+
+	bool calculateDist(std::vector<std::pair<int, osg::Vec3d>> vecXyz);
+
+	bool calculateUpDir(std::vector<osg::Vec3d> xyzs, osg::Matrix &mat);
+public:
+	afx_msg void OnBnClickedloadfacemaskpath3();
 };

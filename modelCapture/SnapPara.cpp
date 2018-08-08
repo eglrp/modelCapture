@@ -28,6 +28,7 @@ vector<Vec3d> CSnapPara::calAllCameraPoint()
 
 			if (t >= mMinLatitude && t <= mMaxLatitude && p >= mMinLongitude && p <= mMaxLongitude)
 			{
+				p -= 90;
 				double x = mRadius * cos(t / 180 * PI) * cos(p / 180 * PI) + mCenter.x();
 				double y = mRadius * cos(t / 180 * PI) * sin(p / 180 * PI) + mCenter.y();
 				double z = mRadius * sin(t / 180 * PI) + mCenter.z();

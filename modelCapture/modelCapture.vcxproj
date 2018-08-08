@@ -163,15 +163,16 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;OUTPUTLOGFILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\thirdPartyLibrary\osg\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\thirdPartyLibrary\osg\include;..\..\thirdPartyLibrary\opencv2_1\include</AdditionalIncludeDirectories>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\..\thirdPartyLibrary\osg\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenThreads.lib;osg.lib;osgDB.lib;osgGA.lib;osgManipulator.lib;osgTerrain.lib;osgUtil.lib;osgViewer.lib;glew32s.lib;glu32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\thirdPartyLibrary\osg\lib;..\..\thirdPartyLibrary\opencv2_1\lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenThreads.lib;osg.lib;osgDB.lib;osgGA.lib;osgManipulator.lib;osgTerrain.lib;osgUtil.lib;osgViewer.lib;glew32s.lib;glu32.lib;opengl32.lib;cv210.lib;cxcore210.lib;highgui210.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -194,6 +195,7 @@
     <ClInclude Include="IDrawer.h" />
     <ClInclude Include="modelCapture.h" />
     <ClInclude Include="modelCaptureDlg.h" />
+    <ClInclude Include="opencvApi.h" />
     <ClInclude Include="PickHandler.h" />
     <ClInclude Include="qcomm.h" />
     <ClInclude Include="Resource.h" />
@@ -209,6 +211,7 @@
     <ClCompile Include="IDrawer.cpp" />
     <ClCompile Include="modelCapture.cpp" />
     <ClCompile Include="modelCaptureDlg.cpp" />
+    <ClCompile Include="opencvApi.cpp" />
     <ClCompile Include="PickHandler.cpp" />
     <ClCompile Include="qcomm.cpp" />
     <ClCompile Include="SnapPara.cpp" />

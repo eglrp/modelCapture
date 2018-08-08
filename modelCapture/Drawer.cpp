@@ -168,6 +168,7 @@ StateSet* CDrawer::makePtState(int size)
 
 void CDrawer::convertLatLongToXyz(double lat, double longtitude, osg::Vec3d &xyz, const osg::Vec3d &center, double radius)
 {
+	longtitude -= 90;
 	double x = radius * cos(lat / 180 * PI) * cos(longtitude / 180 * PI) + center.x();
 	double y = radius * cos(lat / 180 * PI) * sin(longtitude / 180 * PI) + center.y();
 	double z = radius * sin(lat / 180 * PI) + center.z();

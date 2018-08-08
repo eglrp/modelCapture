@@ -14,7 +14,8 @@
 #include <osg/BoundingSphere>
 #include <thread>
 #include "osg/MatrixTransform"
-
+#include "opencvApi.h"
+#include "qcomm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -62,11 +63,36 @@ END_MESSAGE_MAP()
 
 // CmodelCaptureDlg dialog
 
-osg::Quat HPRToQuat(double heading, double pitch, double roll)
+Quat HPRToQuat(double heading, double pitch, double roll)
 {
-	osg::Quat q(roll, osg::Vec3d(0, 1.0, 0), pitch, osg::Vec3d(1.0, 0, 0),
-		heading, osg::Vec3d(0, 0, 1.0));
+	Quat q(roll, Vec3d(0, 1.0, 0), pitch, Vec3d(1.0, 0, 0),
+		heading, Vec3d(0, 0, 1.0));
 	return q;
+}
+
+void QuatToHPR(Quat q, double& heading, double& pitch, double& roll)
+{
+	double test = q.y() * q.z() + q.x() * q.w();
+	if (test > 0.4999)
+	{ // singularity at north pole
+		heading = 2.0 * atan2(q.y(), q.w());
+		pitch = PI_2;
+		roll = 0.0;
+		return;
+	}
+	if (test < -0.4999)
+	{ // singularity at south pole
+		heading = 2.0 * atan2(q.y(), q.w());
+		pitch = -PI_2;
+		roll = 0.0;
+		return;
+	}
+	double sqx = q.x() * q.x();
+	double sqy = q.y() * q.y();
+	double sqz = q.z() * q.z();
+	heading = atan2(2.0 * q.z() * q.w() - 2.0 * q.y() * q.x(), 1.0 - 2.0 * sqz - 2.0 * sqx);
+	pitch = asin(2.0 * test);
+	roll = atan2(2.0 * q.y() * q.w() - 2.0 * q.z() * q.x(), 1.0 - 2.0 * sqy - 2.0 * sqx);
 }
 
 
@@ -103,6 +129,7 @@ void CmodelCaptureDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, ID_RADIUS7, mPitch);
 	DDX_Text(pDX, ID_RADIUS8, mYaw);
 	DDX_Text(pDX, ID_RADIUS9, mRoll);
+	DDX_Text(pDX, ID_FACE_MASK, mSnapPara->mFaceMaskFileName);
 }
 
 BEGIN_MESSAGE_MAP(CmodelCaptureDlg, CDialogEx)
@@ -141,6 +168,7 @@ BEGIN_MESSAGE_MAP(CmodelCaptureDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON16, &CmodelCaptureDlg::OnBnClickedButton16)
 	ON_BN_CLICKED(IDC_BUTTON17, &CmodelCaptureDlg::OnBnClickedButton17)
 	ON_BN_CLICKED(IDC_BUTTON18, &CmodelCaptureDlg::OnBnClickedButton18)
+	ON_BN_CLICKED(loadFaceMaskPath3, &CmodelCaptureDlg::OnBnClickedloadfacemaskpath3)
 END_MESSAGE_MAP()
 
 
@@ -312,6 +340,7 @@ void CmodelCaptureDlg::OnBnClickedImage()
 
 			if (t >= mSnapPara->mMinLatitude && t <= mSnapPara->mMaxLatitude && p >= mSnapPara->mMinLongitude && p <= mSnapPara->mMaxLongitude)
 			{
+				p -= 90;
 				totalNum++;
 				double x = radius * cos(t / 180 * PI) * cos(p / 180 * PI) + center.x();
 				double y = radius * cos(t / 180 * PI) * sin(p / 180 * PI) + center.y();
@@ -351,7 +380,7 @@ void CmodelCaptureDlg::OnBnClickedImage()
 }
 
 void CmodelCaptureDlg::startThread(vector<threadPara> vecPara, ref_ptr<Node> node, 
-	int imageWidth, int imageHeight, osg::Vec3d center, osg::Vec3d up)
+	int imageWidth, int imageHeight, Vec3d center, Vec3d up)
 {
 	shared_ptr<ICapture> iCapture = ICaptureFactory::create();
 
@@ -364,7 +393,7 @@ void CmodelCaptureDlg::startThread(vector<threadPara> vecPara, ref_ptr<Node> nod
 
 		Vec3d up = para.up;
 
-		ref_ptr<Node> model = dynamic_cast<osg::Node*> (node->clone(osg::CopyOp::DEEP_COPY_ALL));
+		ref_ptr<Node> model = dynamic_cast<Node*> (node->clone(CopyOp::DEEP_COPY_ALL));
 
 		iCapture->autoCaptureImage(model, snapFile, imageWidth, imageHeight,
 			x, y, z, center.x(), center.y(), center.z(),
@@ -386,10 +415,33 @@ void CmodelCaptureDlg::OnBnClickedPreview()
 	iCapture->setPreview();
 }
 
+void CmodelCaptureDlg::OnBnClickedloadfacemaskpath3()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+
+	CFileDialog dialog(TRUE, NULL, NULL, OFN_HIDEREADONLY, (LPCTSTR)_TEXT("faceMask file (*.txt)|*.*||"), NULL);
+
+	if (dialog.DoModal() == IDOK)
+	{
+		mSnapPara->mFaceMaskFileName = dialog.GetPathName();
+
+	}
+
+	UpdateData(FALSE);
+}
+
 
 void CmodelCaptureDlg::OnBnClickedloadsnapsavepath2()
 {
 	UpdateData(TRUE);
+
+	if (mSnapPara->mFaceMaskFileName == "")
+	{
+		AfxMessageBox(_T("没有加载面部特征文件"));
+		return;
+	}
+
 	// TODO: Add your control notification handler code here
 	CFileDialog dialog(TRUE, NULL, NULL, OFN_HIDEREADONLY, (LPCTSTR)_TEXT("model file (*.osgb, *.obj...)|*.*||"), NULL);
 	if (dialog.DoModal() == IDOK)
@@ -397,19 +449,239 @@ void CmodelCaptureDlg::OnBnClickedloadsnapsavepath2()
 		mSnapPara->mSceneFileName = dialog.GetPathName();
 		string sceneFileName = mSnapPara->mSceneFileName;
 
-		osg::ref_ptr<osg::Node> model = osgDB::readNodeFile(sceneFileName);
+		ref_ptr<Node> model = osgDB::readNodeFile(sceneFileName);
+
+		if (!model)
+		{
+			return;
+		}
+
 		model->getOrCreateStateSet()->setMode(GL_LIGHTING, 0x2);
-		osg::Vec3d center = model->getBound().center();
-		osg::ref_ptr<osg::MatrixTransform> trans = new osg::MatrixTransform;
+		Vec3d center = model->getBound().center();
+		ref_ptr<MatrixTransform> trans = new MatrixTransform;
 		trans->addChild(model);
+		vector<pair<int, Vec3d>> vecXyz;
+
+		if (readFaceKeyPoints(vecXyz) == false)
+		{
+			return;
+		}
+
+		correctModel(vecXyz, trans);
+
+		calculateDist(vecXyz);
+
 
 		mSnapPara->mSceneNode = trans;
-		mSnapPara->mCenter = center;
+		mSnapPara->mCenter = Vec3d(0, 0, 0);
 	}
 
 	UpdateData(FALSE);
 }
 
+bool CmodelCaptureDlg::readFaceKeyPoints(vector<pair<int, Vec3d>> &vecXyz)
+{
+	//对模型进行纠正
+	string str = mSnapPara->mFaceMaskFileName;
+	const char* fileName = str.c_str();
+	FILE* fp = std::fopen(fileName, "r");
+
+	while (!feof(fp))
+	{
+		int id = 0;
+		double x = 0.0;
+		double y = 0.0;
+		double z = 0.0;
+		fscanf(fp, "点位%d:%lf %lf %lf\n", &id, &x, &y, &z);
+		vecXyz.push_back(pair<int, Vec3d>(id, Vec3d(x, y, z)));
+	}
+
+	if (vecXyz.size() != 68)
+	{
+		AfxMessageBox(_T("特征点数量不等于68个"));
+		return false;
+	}
+
+	return true;
+}
+
+bool CmodelCaptureDlg::correctModel(vector<pair<int, Vec3d>> vecXyz, ref_ptr<MatrixTransform> trans)
+{
+	//计算中心
+	vector<Vec3d> xyzs;
+	Vec3d center;
+
+	for (auto pt : vecXyz)
+	{
+		xyzs.push_back(pt.second);
+
+		center += pt.second;
+	}
+
+	center = center / vecXyz.size();
+
+	//计算正面法向量
+	double a = 0.0; double b = 0.0; double c = 0.0; double d = 0.0;
+	CVPlane(xyzs, a, b, c, d);
+
+	Vec3d normal = Vec3d(a, b, c);
+	Vec3d diff = xyzs[31] - center;
+
+	if (diff * normal < 0)
+	{
+		normal *= -1;
+	}
+
+	//位移到原点
+	Vec3d translate = Vec3d(0, 0, 0) - center;
+	Matrix mat1;
+	mat1.makeTranslate(translate);
+
+	//把模型的正面法向量旋转到vec3d(0, -1, 0);
+	Matrix mat2;
+	mat2.makeRotate(normal, Vec3d(0, -1, 0));
+	Matrix mat;
+	mat = mat1 * mat2;
+
+	//计算向上方向
+	calculateUpDir(xyzs, mat);
+	trans->setMatrix(mat);
+	mCorrectMat = mat;
+
+	return true;
+}
+
+bool CmodelCaptureDlg::calculateDist(vector<pair<int, Vec3d>> vecXyz)
+{
+	Vec3d min = Vec3d(0, 0, 0);
+	Vec3d max = Vec3d(0, 0, 0);
+
+	for (int i = 0; i < vecXyz.size(); i++)
+	{
+		Vec3d pt = vecXyz[i].second;
+		pt = pt * mCorrectMat;
+
+		if (i == 0)
+		{
+			min.x() = pt.x();
+			min.y() = pt.y();
+			min.z() = pt.z();
+
+			max.x() = pt.x();
+			max.y() = pt.y();
+			max.z() = pt.z();
+		}
+
+		if (pt.x() < min.x())
+		{
+			min.x() = pt.x();
+		}
+
+		if (pt.y() < min.y())
+		{
+			min.y() = pt.y();
+		}
+
+		if (pt.z() < min.z())
+		{
+			min.z() = pt.z();
+		}
+
+		if (pt.x() > max.x())
+		{
+			max.x() = pt.x();
+		}
+
+		if (pt.y() > max.y())
+		{
+			max.y() = pt.y();
+		}
+
+		if (pt.z() < max.z())
+		{
+			max.z() = pt.z();
+		}
+	}
+
+	double height = DisplaySettings::instance()->getScreenHeight();
+	double width = DisplaySettings::instance()->getScreenWidth();
+	double distance = DisplaySettings::instance()->getScreenDistance();
+	double vfov = RadiansToDegrees(atan2(height / 2.0f, distance)*2.0);
+
+	vfov /= 2.0;
+	double radius = sqrt(0.25 * ((max - min).length2()));
+	mSnapPara->mRadius = radius / sin(vfov /180.0 * PI);
+
+	return true;
+}
+
+bool CmodelCaptureDlg::calculateUpDir(vector<Vec3d> xyzs, Matrix &mat)
+{
+	Vec3d total = Vec3d(0, 0, 0);
+	vector<Vec3d> pts;
+	vector<Vec3d> xys;
+
+	for (int i = 0; i < xyzs.size(); i++)
+	{
+		auto pt = xyzs[i] * mat;
+		xys.emplace_back(pt.x(), pt.z(), 0);
+	}
+
+	vector<Vec3d> keyPoints;
+	for (int i = 0; i < 8; i++)
+	{
+		auto pt = xys[0 + i] + xys[16 - i];
+		pt /= 2.0;
+		keyPoints.push_back(pt);
+	}
+
+	for (int i = 0; i < 5; i++)
+	{
+		auto pt = xys[17 + i] + xys[26 - i];
+		pt /= 2.0;
+		keyPoints.push_back(pt);
+	}
+
+	//非对称点
+	for (int i = 0; i < 4; i++)
+	{
+		auto pt = xys[27 + i];
+		keyPoints.push_back(pt);
+	}
+
+	for (int i = 0; i < 6; i++)
+	{
+		auto pt = xys[36 + i] + xys[47 - i];
+		pt /= 2.0;
+		keyPoints.push_back(pt);
+	}
+
+
+	float nx = 0.0; float ny = 0.0; float x0 = 0.0; float y0 = 0.0;
+	CVLine(keyPoints, nx, ny, x0, y0);
+	double k = ny / nx;
+
+	double pt1x = 0.0;
+	double pt1Z = k * (pt1x - x0) + y0;
+	double pt2x = 10.0;
+	double pt2Z = k * (pt2x - x0) + y0;
+	vector<Vec3d> vecPts;
+	vecPts.emplace_back(pt1x, 0, pt1Z);
+	vecPts.emplace_back(pt2x, 0, pt2Z);
+	Vec3d lineDir = vecPts[1] - vecPts[0];
+	Vec3d correctDir = xys[27] - xys[30];
+
+	if (lineDir * correctDir < 0)
+	{
+		lineDir *= -1;
+	}
+
+	Matrix mat3;
+	mat3.makeRotate(lineDir, Vec3d(0, 0, 1));
+	mat *= mat3;
+
+	return true;
+}
 
 void CmodelCaptureDlg::OnStnClickedInterval()	
 {
@@ -682,20 +954,20 @@ void CmodelCaptureDlg::rotateModel(double pitch, double yaw, double roll)
 	double y = yaw / 180.0 * PI;
 	double r = roll / 180.0 * PI;
 
-	osg::Quat quat = HPRToQuat(p, y, r);
-	osg::Vec3d center = mSnapPara->mCenter;
-	osg::ref_ptr<osg::MatrixTransform> mTrans = dynamic_cast<osg::MatrixTransform*> (mSnapPara->mSceneNode->asTransform());
+	Quat quat = HPRToQuat(p, y, r);
+	Vec3d center = mSnapPara->mCenter;
+	ref_ptr<MatrixTransform> mTrans = dynamic_cast<MatrixTransform*> (mSnapPara->mSceneNode->asTransform());
 
 	if (mTrans)
 	{
-		osg::Matrix reverseTransMat;
+		Matrix reverseTransMat;
 		reverseTransMat.setTrans(center * (-1));
-		osg::Matrix rotMat;
+		Matrix rotMat;
 		rotMat.setRotate(quat);
-		osg::Matrix transMat;
+		Matrix transMat;
 		transMat.setTrans(center);
 
-		osg::Matrix mat = reverseTransMat * rotMat * transMat;
+		Matrix mat = mCorrectMat * reverseTransMat * rotMat * transMat;
 		mTrans->setMatrix(mat);
 	}
 }
@@ -758,3 +1030,5 @@ void CmodelCaptureDlg::OnBnClickedButton18()
 	rotateModel(mPitch, mYaw, mRoll);
 	UpdateData(FALSE);
 }
+
+

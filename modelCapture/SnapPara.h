@@ -23,6 +23,8 @@ namespace capture
 
 		CString mSceneFileName = "";
 
+		CString mFaceMaskFileName = "";
+
 		CString mOutFile = "";
 
 		int mImageWidth = 0;
