@@ -124,4 +124,9 @@ protected:
 	bool calculateUpDir(std::vector<osg::Vec3d> xyzs, osg::Matrix &mat);
 public:
 	afx_msg void OnBnClickedloadfacemaskpath3();
+	afx_msg void OnEnChangeRadius2();
+	
+	afx_msg void OnBnClickedButton19();
+	afx_msg void OnBnClickedButton20();
+	afx_msg void OnEnChangeRadius10();
 };

@@ -16,6 +16,7 @@
 #include "osg/MatrixTransform"
 #include "opencvApi.h"
 #include "qcomm.h"
+#include "resource.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -120,16 +121,18 @@ void CmodelCaptureDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, ID_IMAGE_WIDTH, mSnapPara->mImageWidth);
 	DDX_Text(pDX, ID_IMAGE_HEIGHT, mSnapPara->mImageHeight);
 	DDX_Text(pDX, ID_RADIUS, mSnapPara->mRadius);
-	DDX_Text(pDX, ID_RADIUS2, mSnapPara->mInterval);
+	DDX_Text(pDX, ID_RADIUS2, mSnapPara->mIntervalX);
+	DDX_Text(pDX, ID_RADIUS10, mSnapPara->mIntervalY);
 	DDX_Text(pDX, ID_RADIUS3, mSnapPara->mMinLatitude);
 	DDX_Text(pDX, ID_RADIUS4, mSnapPara->mMaxLatitude);
 	DDX_Text(pDX, ID_RADIUS5, mSnapPara->mMinLongitude);
 	DDX_Text(pDX, ID_RADIUS6, mSnapPara->mMaxLongitude);
-	DDX_Check(pDX, IDC_CHECK1, mUpSideDown);
+	//DDX_Check(pDX, IDC_CHECK1, mUpSideDown);
 	DDX_Text(pDX, ID_RADIUS7, mPitch);
 	DDX_Text(pDX, ID_RADIUS8, mYaw);
 	DDX_Text(pDX, ID_RADIUS9, mRoll);
 	DDX_Text(pDX, ID_FACE_MASK, mSnapPara->mFaceMaskFileName);
+
 }
 
 BEGIN_MESSAGE_MAP(CmodelCaptureDlg, CDialogEx)
@@ -169,6 +172,10 @@ BEGIN_MESSAGE_MAP(CmodelCaptureDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON17, &CmodelCaptureDlg::OnBnClickedButton17)
 	ON_BN_CLICKED(IDC_BUTTON18, &CmodelCaptureDlg::OnBnClickedButton18)
 	ON_BN_CLICKED(loadFaceMaskPath3, &CmodelCaptureDlg::OnBnClickedloadfacemaskpath3)
+	ON_EN_CHANGE(ID_RADIUS2, &CmodelCaptureDlg::OnEnChangeRadius2)
+	ON_BN_CLICKED(IDC_BUTTON19, &CmodelCaptureDlg::OnBnClickedButton19)
+	ON_BN_CLICKED(IDC_BUTTON20, &CmodelCaptureDlg::OnBnClickedButton20)
+	ON_EN_CHANGE(ID_RADIUS10, &CmodelCaptureDlg::OnEnChangeRadius10)
 END_MESSAGE_MAP()
 
 
@@ -207,11 +214,12 @@ BOOL CmodelCaptureDlg::OnInitDialog()
 	mSnapPara->mImageWidth = 3000;
 	mSnapPara->mImageHeight = 3000;
 	mSnapPara->mRadius = 100;
-	mSnapPara->mInterval = 45;
-	mSnapPara->mMinLatitude = -45;
-	mSnapPara->mMaxLatitude = 45;
-	mSnapPara->mMinLongitude = -45;
-	mSnapPara->mMaxLongitude = 45;
+	mSnapPara->mIntervalX = 5;
+	mSnapPara->mIntervalY = 5;
+	mSnapPara->mMinLatitude = -7;
+	mSnapPara->mMaxLatitude = 1;
+	mSnapPara->mMinLongitude = -60;
+	mSnapPara->mMaxLongitude = 60;
 
 	UpdateData(FALSE);
 
@@ -314,7 +322,8 @@ void CmodelCaptureDlg::OnBnClickedImage()
 	}
 
 	string savePath = mSnapPara->mOutFile;
-	int interval = mSnapPara->mInterval;
+	int intervalX = mSnapPara->mIntervalX;
+	int intervalY = mSnapPara->mIntervalY;
 	double radius = mSnapPara->mRadius;
 	Vec3d center = mSnapPara->mCenter;
 	Vec3d up = mSnapPara->mUp;
@@ -331,9 +340,9 @@ void CmodelCaptureDlg::OnBnClickedImage()
 
 	int totalNum = 0;
 
-	for (int latitude = -180; latitude <= 180; latitude = latitude + interval)
+	for (int latitude = -180; latitude <= 180; latitude = latitude + intervalX)
 	{
-		for (int longtitude = -180; longtitude <= 180; longtitude = longtitude + interval)
+		for (int longtitude = -180; longtitude <= 180; longtitude = longtitude + intervalY)
 		{
 			double t = latitude;
 			double p = longtitude;
@@ -688,7 +697,7 @@ void CmodelCaptureDlg::OnStnClickedInterval()
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 
-	if (mSnapPara->mInterval == 0)
+	if (mSnapPara->mIntervalX == 0)
 	{
 		return;
 	}
@@ -723,6 +732,25 @@ void CmodelCaptureDlg::OnEnChangeRadius()
 	UpdateData(TRUE);
 	iCapture->refresh(mSnapPara);
 
+	UpdateData(FALSE);
+}
+
+void CmodelCaptureDlg::OnEnChangeRadius2()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+	UpdateData(TRUE);
+
+	if (mSnapPara->mIntervalX == 0 || mSnapPara->mIntervalY == 0)
+	{
+		return;
+	}
+
+	iCapture->refresh(mSnapPara);
 	UpdateData(FALSE);
 }
 
@@ -796,7 +824,7 @@ void CmodelCaptureDlg::OnBnClickedButton3()
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
-	mSnapPara->mInterval--;
+	mSnapPara->mIntervalX--;
 	iCapture->refresh(mSnapPara);
 	UpdateData(FALSE);
 }
@@ -806,10 +834,36 @@ void CmodelCaptureDlg::OnBnClickedButton4()
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
-	mSnapPara->mInterval++;
+	mSnapPara->mIntervalX++;
 	iCapture->refresh(mSnapPara);
 	UpdateData(FALSE);
 }
+
+void CmodelCaptureDlg::OnBnClickedButton19()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mIntervalY--;
+
+	if (mSnapPara->mIntervalX == 0 || mSnapPara->mIntervalY == 0)
+	{
+		return;
+	}
+
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
+void CmodelCaptureDlg::OnBnClickedButton20()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	mSnapPara->mIntervalY++;
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
 
 
 void CmodelCaptureDlg::OnBnClickedButton5()
@@ -847,6 +901,12 @@ void CmodelCaptureDlg::OnBnClickedButton11()
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 	mSnapPara->mMaxLatitude++;
+
+	if (mSnapPara->mIntervalX == 0 || mSnapPara->mIntervalY == 0)
+	{
+		return;
+	}
+
 	iCapture->refresh(mSnapPara);
 	UpdateData(FALSE);
 }
@@ -948,6 +1008,26 @@ void CmodelCaptureDlg::OnEnChangeRadius9()
 	UpdateData(FALSE);
 }
 
+void CmodelCaptureDlg::OnEnChangeRadius10()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+	UpdateData(TRUE);
+	
+	if (mSnapPara->mIntervalX == 0 || mSnapPara->mIntervalY == 0)
+	{
+		return;
+	}
+
+	iCapture->refresh(mSnapPara);
+	UpdateData(FALSE);
+}
+
+
 void CmodelCaptureDlg::rotateModel(double pitch, double yaw, double roll)
 {
 	double p = pitch / 180.0 * PI;
@@ -1030,5 +1110,11 @@ void CmodelCaptureDlg::OnBnClickedButton18()
 	rotateModel(mPitch, mYaw, mRoll);
 	UpdateData(FALSE);
 }
+
+
+
+
+
+
 
 

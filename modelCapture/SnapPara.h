@@ -17,7 +17,9 @@ namespace capture
 
 		double mRadius = 0;
 
-		int mInterval = 0;
+		int mIntervalX = 0;
+
+		int mIntervalY = 0;
 
 		osg::Vec3d mCenter = osg::Vec3d(0, 0, 0);
 
