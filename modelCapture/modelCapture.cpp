@@ -175,12 +175,12 @@ BOOL CmodelCaptureApp::InitInstance()
 
 		if (strs[6] != "none")
 		{
-			para->mIntervalX = stringToNum<int>(strs[6].c_str());
+			para->mIntervalX = stringToNum<double>(strs[6].c_str());
 		}
 
 		if (strs[7] != "none")
 		{
-			para->mIntervalY = stringToNum<int>(strs[7].c_str());
+			para->mIntervalY = stringToNum<double>(strs[7].c_str());
 		}
 
 		if (strs[8] != "none")

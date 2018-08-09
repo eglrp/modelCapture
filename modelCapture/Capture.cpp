@@ -361,8 +361,8 @@ void CCapture::preview(shared_ptr<CSnapPara> para)
 void CCapture::previewImplement(shared_ptr<CSnapPara> para)
 {
 	double radius = para->mRadius;
-	int intervalX = para->mIntervalX;
-	int intervalY = para->mIntervalY;
+	double intervalX = para->mIntervalX;
+	double intervalY = para->mIntervalY;
 	Vec3d center = para->mCenter;
 	Vec3d up = para->mUp;
 	osg::ref_ptr<osg::Node> model = para->mSceneNode;
