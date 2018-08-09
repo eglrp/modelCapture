@@ -32,16 +32,22 @@ class CmodelCaptureDlg : public CDialogEx
 // Construction
 public:
 	CmodelCaptureDlg(CWnd* pParent = NULL);	// standard constructor
+	CmodelCaptureDlg(std::shared_ptr<capture::CSnapPara> para, CWnd* pParent = NULL);
 
 // Dialog Data
 	enum { IDD = IDD_MODELCAPTURE_DIALOG };
 
-	protected:
+	void run();
+
+	void loadModel();
+
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 
 	void startThread(std::vector<threadPara> vecPara, osg::ref_ptr<osg::Node> node,
 		int imageWidth, int imageHeight, osg::Vec3d center, osg::Vec3d up);
 
+	
 
 // Implementation
 protected:
@@ -96,6 +102,7 @@ public:
 
 	osg::Matrix mCorrectMat;
 	
+	void startSnapImage(bool bDetach = true);
 
 	void rotateModel(double pitch, double yaw, double roll);
 	

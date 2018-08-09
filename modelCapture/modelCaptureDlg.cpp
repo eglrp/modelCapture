@@ -110,8 +110,32 @@ CmodelCaptureDlg::CmodelCaptureDlg(CWnd* pParent /*=NULL*/)
 	shared_ptr<CSnapPara> temp(new CSnapPara);
 	mSnapPara = temp;
 
+	mSnapPara->mImageWidth = 3000;
+	mSnapPara->mImageHeight = 3000;
+	mSnapPara->mRadius = 100;
+	mSnapPara->mIntervalX = 5;
+	mSnapPara->mIntervalY = 5;
+	mSnapPara->mMinLatitude = -7;
+	mSnapPara->mMaxLatitude = 1;
+	mSnapPara->mMinLongitude = -60;
+	mSnapPara->mMaxLongitude = 60;
+
 	iCapture = ICaptureFactory::create();
 }
+
+CmodelCaptureDlg::CmodelCaptureDlg(shared_ptr<CSnapPara> para, CWnd* pParent /*=NULL*/)
+	: CDialogEx(CmodelCaptureDlg::IDD, pParent)
+	, mUpSideDown(FALSE)
+	, mPitch(0)
+	, mYaw(0)
+	, mRoll(0)
+	, mSnapPara(para)
+{
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+
+	iCapture = ICaptureFactory::create();
+}
+
 
 void CmodelCaptureDlg::DoDataExchange(CDataExchange* pDX)
 {
@@ -211,15 +235,7 @@ BOOL CmodelCaptureDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	UpdateData(TRUE);
-	mSnapPara->mImageWidth = 3000;
-	mSnapPara->mImageHeight = 3000;
-	mSnapPara->mRadius = 100;
-	mSnapPara->mIntervalX = 5;
-	mSnapPara->mIntervalY = 5;
-	mSnapPara->mMinLatitude = -7;
-	mSnapPara->mMaxLatitude = 1;
-	mSnapPara->mMinLongitude = -60;
-	mSnapPara->mMaxLongitude = 60;
+	
 
 	UpdateData(FALSE);
 
@@ -316,6 +332,15 @@ void CmodelCaptureDlg::OnBnClickedImage()
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 
+	startSnapImage();
+
+	UpdateData(FALSE);
+
+	AfxMessageBox(_T("正在生成360度截图"));
+}
+
+void CmodelCaptureDlg::startSnapImage(bool bDetach)
+{
 	if (mSnapPara->mSceneNode == NULL)
 	{
 		return;
@@ -380,13 +405,19 @@ void CmodelCaptureDlg::OnBnClickedImage()
 		vecThread.push_back(std::thread(&CmodelCaptureDlg::startThread, this, vecPara, model, imageWidth, imageHeight, center, up));
 	}
 
-	std::for_each(vecThread.begin(), vecThread.end(),
-		std::mem_fn(&std::thread::detach));
-
-	UpdateData(FALSE);
-
-	AfxMessageBox(_T("正在生成360度截图"));
+	if (bDetach)
+	{
+		std::for_each(vecThread.begin(), vecThread.end(),
+			std::mem_fn(&std::thread::detach));
+	}
+	else
+	{
+		std::for_each(vecThread.begin(), vecThread.end(),
+			std::mem_fn(&std::thread::join));
+	}
+	
 }
+
 
 void CmodelCaptureDlg::startThread(vector<threadPara> vecPara, ref_ptr<Node> node, 
 	int imageWidth, int imageHeight, Vec3d center, Vec3d up)
@@ -408,6 +439,43 @@ void CmodelCaptureDlg::startThread(vector<threadPara> vecPara, ref_ptr<Node> nod
 			x, y, z, center.x(), center.y(), center.z(),
 			up.x(), up.y(), up.z());
 	}
+}
+
+void CmodelCaptureDlg::run()
+{
+	loadModel();
+	startSnapImage(false);
+}
+
+void CmodelCaptureDlg::loadModel()
+{
+	string sceneFileName = mSnapPara->mSceneFileName;
+
+	ref_ptr<Node> model = osgDB::readNodeFile(sceneFileName);
+
+	if (!model)
+	{
+		return;
+	}
+
+	model->getOrCreateStateSet()->setMode(GL_LIGHTING, 0x2);
+	Vec3d center = model->getBound().center();
+	ref_ptr<MatrixTransform> trans = new MatrixTransform;
+	trans->addChild(model);
+	vector<pair<int, Vec3d>> vecXyz;
+
+	if (readFaceKeyPoints(vecXyz) == false)
+	{
+		return;
+	}
+
+	correctModel(vecXyz, trans);
+
+	calculateDist(vecXyz);
+
+
+	mSnapPara->mSceneNode = trans;
+	mSnapPara->mCenter = Vec3d(0, 0, 0);
 }
 
 void CmodelCaptureDlg::OnBnClickedPreview()
@@ -456,33 +524,7 @@ void CmodelCaptureDlg::OnBnClickedloadsnapsavepath2()
 	if (dialog.DoModal() == IDOK)
 	{
 		mSnapPara->mSceneFileName = dialog.GetPathName();
-		string sceneFileName = mSnapPara->mSceneFileName;
-
-		ref_ptr<Node> model = osgDB::readNodeFile(sceneFileName);
-
-		if (!model)
-		{
-			return;
-		}
-
-		model->getOrCreateStateSet()->setMode(GL_LIGHTING, 0x2);
-		Vec3d center = model->getBound().center();
-		ref_ptr<MatrixTransform> trans = new MatrixTransform;
-		trans->addChild(model);
-		vector<pair<int, Vec3d>> vecXyz;
-
-		if (readFaceKeyPoints(vecXyz) == false)
-		{
-			return;
-		}
-
-		correctModel(vecXyz, trans);
-
-		calculateDist(vecXyz);
-
-
-		mSnapPara->mSceneNode = trans;
-		mSnapPara->mCenter = Vec3d(0, 0, 0);
+		loadModel();
 	}
 
 	UpdateData(FALSE);
