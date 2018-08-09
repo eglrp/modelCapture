@@ -9,6 +9,7 @@
 #include <osg/Vec3d>
 #include "afxwin.h"
 #include "SnapPara.h"
+#include <osg/MatrixTransform>
 
 namespace capture
 {
@@ -31,16 +32,22 @@ class CmodelCaptureDlg : public CDialogEx
 // Construction
 public:
 	CmodelCaptureDlg(CWnd* pParent = NULL);	// standard constructor
+	CmodelCaptureDlg(std::shared_ptr<capture::CSnapPara> para, CWnd* pParent = NULL);
 
 // Dialog Data
 	enum { IDD = IDD_MODELCAPTURE_DIALOG };
 
-	protected:
+	void run();
+
+	void loadModel();
+
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 
 	void startThread(std::vector<threadPara> vecPara, osg::ref_ptr<osg::Node> node,
 		int imageWidth, int imageHeight, osg::Vec3d center, osg::Vec3d up);
 
+	
 
 // Implementation
 protected:
@@ -83,4 +90,50 @@ public:
 	afx_msg void OnBnClickedButton10();
 	afx_msg void OnBnClickedCheck1();
 	BOOL mUpSideDown;
+	afx_msg void OnEnChangeRadius7();
+	afx_msg void OnEnChangeRadius8();
+	afx_msg void OnEnChangeRadius9();
+	afx_msg void OnBnClickedButton13();
+	afx_msg void OnBnClickedButton14();
+
+	double mPitch;
+	double mYaw;
+	double mRoll;
+
+	osg::Matrix mCorrectMat;
+	
+	void startSnapImage(bool bDetach = true);
+
+	void rotateModel(double pitch, double yaw, double roll);
+	
+	
+	afx_msg void OnBnClickedButton15();
+	afx_msg void OnBnClickedButton16();
+	afx_msg void OnBnClickedButton17();
+	afx_msg void OnBnClickedButton18();
+
+protected:
+	/*
+	** brief 从文件读取面部特征点
+	** param vecXyz 特征点编号及坐标
+	*/
+
+	bool readFaceKeyPoints(std::vector<std::pair<int, osg::Vec3d>> &vecXyz);
+	
+	/*
+	** brief 根据特征点校正模型，使得面部中心在（0，0，0），头部向上方向（0， 0， 1），面部正面方向（0， -1，0）
+	** param vecXyz 特征点编号及坐标
+	*/
+	bool correctModel(std::vector<std::pair<int, osg::Vec3d>> vecXyz, osg::ref_ptr<osg::MatrixTransform> trans);
+
+	bool calculateDist(std::vector<std::pair<int, osg::Vec3d>> vecXyz);
+
+	bool calculateUpDir(std::vector<osg::Vec3d> xyzs, osg::Matrix &mat);
+public:
+	afx_msg void OnBnClickedloadfacemaskpath3();
+	afx_msg void OnEnChangeRadius2();
+	
+	afx_msg void OnBnClickedButton19();
+	afx_msg void OnBnClickedButton20();
+	afx_msg void OnEnChangeRadius10();
 };

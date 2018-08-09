@@ -50,6 +50,8 @@ using namespace osgGA;
 using namespace osgDB;
 using namespace capture;
 
+std::mutex mut;
+
 /** Helper class*/
 template<class T>
 class FindTopMostNodeOfTypeVisitor : public NodeVisitor
@@ -359,11 +361,12 @@ void CCapture::preview(shared_ptr<CSnapPara> para)
 void CCapture::previewImplement(shared_ptr<CSnapPara> para)
 {
 	double radius = para->mRadius;
-	int interval = para->mInterval;
+	int intervalX = para->mIntervalX;
+	int intervalY = para->mIntervalY;
 	Vec3d center = para->mCenter;
 	Vec3d up = para->mUp;
 	osg::ref_ptr<osg::Node> model = para->mSceneNode;
-	osg::ref_ptr<osg::Node> snapNode = dynamic_cast<osg::Node*> (model->clone(osg::CopyOp::DEEP_COPY_ALL));
+	osg::ref_ptr<osg::Node> snapNode = model;
 
 	mRoot = new osg::Group;
 	osg::ref_ptr<osg::Group> sceneGroup = new osg::Group;
@@ -456,6 +459,7 @@ void CCapture::previewImplement(shared_ptr<CSnapPara> para)
 
 	while (!viewer->done())
 	{
+		lock_guard<mutex> gurad(mut);
 		viewer->frame();
 	}
 
@@ -469,6 +473,8 @@ void CCapture::refresh(shared_ptr<CSnapPara> para)
 	{
 		return;
 	}
+
+	lock_guard<mutex> gurad(mut);
 
 	clearGraphic(mRoot);
 	drawGraphic(para, mRoot);
