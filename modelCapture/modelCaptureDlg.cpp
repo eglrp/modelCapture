@@ -347,8 +347,8 @@ void CmodelCaptureDlg::startSnapImage(bool bDetach)
 	}
 
 	string savePath = mSnapPara->mOutFile;
-	int intervalX = mSnapPara->mIntervalX;
-	int intervalY = mSnapPara->mIntervalY;
+	double intervalX = mSnapPara->mIntervalX;
+	double intervalY = mSnapPara->mIntervalY;
 	double radius = mSnapPara->mRadius;
 	Vec3d center = mSnapPara->mCenter;
 	Vec3d up = mSnapPara->mUp;
@@ -365,9 +365,9 @@ void CmodelCaptureDlg::startSnapImage(bool bDetach)
 
 	int totalNum = 0;
 
-	for (int latitude = -180; latitude <= 180; latitude = latitude + intervalX)
+	for (double latitude = -180; latitude <= 180; latitude = latitude + intervalX)
 	{
-		for (int longtitude = -180; longtitude <= 180; longtitude = longtitude + intervalY)
+		for (double longtitude = -180; longtitude <= 180; longtitude = longtitude + intervalY)
 		{
 			double t = latitude;
 			double p = longtitude;
@@ -380,7 +380,15 @@ void CmodelCaptureDlg::startSnapImage(bool bDetach)
 				double y = radius * cos(t / 180 * PI) * sin(p / 180 * PI) + center.y();
 				double z = radius * sin(t / 180 * PI) + center.z();
 
-				string snapFile = savePath + to_string(latitude) + "_" + to_string(longtitude) + ".jpg";
+				char strLatitude[MAX_PATH];
+				sprintf_s(strLatitude, "%.2lf", latitude);
+				string sLatitude = strLatitude;
+
+				char strLontitude[MAX_PATH];
+				sprintf_s(strLontitude, "%.2lf", longtitude);
+				string sLontitude = strLontitude;
+
+				string snapFile = savePath + sLatitude + "_" + sLontitude + ".jpg";
 				threadPara para;
 				para.x = x;
 				para.y = y;
