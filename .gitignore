@@ -19,3 +19,6 @@ modelCapture.v12.suo
 x64/Release/modelCapture.lib
 x64/Release/modelCapture.exp
 modelCapture.v12.suo
+*.docx
+*.docx
+x64/Release/拍照功能参数化.docx

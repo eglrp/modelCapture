@@ -2,7 +2,7 @@
 <Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommand>G:\14-modelCaputre\modelCapture\x64\Release\modelCaptureCmd.exe</LocalDebuggerCommand>
-    <LocalDebuggerCommandArguments>-h</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-m E:\1-CommonUseSoft\169-三维模型人脸切图\三维模型人脸切图\Data\毛再生\osg\Tile+0.osgb -f E:\1-CommonUseSoft\169-三维模型人脸切图\三维模型人脸切图\Data\毛再生\人脸上3d点坐标68个.txt -o E:\1-CommonUseSoft\169-三维模型人脸切图\三维模型人脸切图\sample\test\ --height 5000 --width 5000 --dx 10 --dy 10 --minX -30 --maxX 30 --minY -10 --maxY 11 --face</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
