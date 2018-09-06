@@ -2,7 +2,8 @@
 <Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommand>G:\14-modelCaputre\modelCapture\x64\Release\modelCapture.exe</LocalDebuggerCommand>
-    <LocalDebuggerCommandArguments>0 E:\1-CommonUseSoft\169-三维模型人脸切图\三维模型人脸切图\Data\毛再生\osg\Tile+0.osgb E:\1-CommonUseSoft\169-三维模型人脸切图\三维模型人脸切图\Data\毛再生\人脸上3d点坐标68个.txt E:\1-CommonUseSoft\169-三维模型人脸切图\三维模型人脸切图\sample\test\ 5000 5000 1 1 -30 30 -10 11</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>
+    </LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
