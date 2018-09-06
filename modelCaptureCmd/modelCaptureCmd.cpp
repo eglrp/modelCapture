@@ -153,6 +153,14 @@ int main(int argc, char** argv)
 		}
 	}
 
+	char c = sOut[sOut.size() - 1];
+
+	if (c != '\\' && c != '\/')
+	{
+		osg::notify(osg::NOTICE) << "输出路径要以斜杠结尾" << std::endl;
+		return -1;
+	}
+
 	if (!arguments.read(_HEIGHT, sImageHeight))
 	{
 		sImageHeight = "none";
@@ -222,6 +230,29 @@ int main(int argc, char** argv)
 	shExecInfo.nShow = hasUI ? SW_SHOW : SW_HIDE;
 	shExecInfo.hInstApp = NULL;
 	ShellExecuteEx(&shExecInfo);
+
+	//创建一个job内核对象
+	HANDLE hd = CreateJobObjectA(NULL, "HelloWrold");
+
+	if (hd)
+	{
+		//设置job内核对象限制条件为：当job对象关闭的时候，关闭其所有子进程
+		JOBOBJECT_EXTENDED_LIMIT_INFORMATION extLimitInfo;
+		extLimitInfo.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+		int retVal = SetInformationJobObject(hd,
+			JobObjectExtendedLimitInformation,
+			&extLimitInfo,
+			sizeof(extLimitInfo));
+
+		if (retVal)
+		{
+			//将进程加入到job容器中去。
+			if (shExecInfo.hProcess)
+			{
+				retVal = AssignProcessToJobObject(hd, shExecInfo.hProcess);
+			}
+		}
+	}
 
 	//无界面程序输出提示信息
 	if (!hasUI)
