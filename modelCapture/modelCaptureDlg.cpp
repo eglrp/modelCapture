@@ -728,7 +728,11 @@ bool CmodelCaptureDlg::calculateUpDir(vector<Vec3d> xyzs, Matrix &mat)
 	vecPts.emplace_back(pt1x, 0, pt1Z);
 	vecPts.emplace_back(pt2x, 0, pt2Z);
 	Vec3d lineDir = vecPts[1] - vecPts[0];
-	Vec3d correctDir = xys[27] - xys[30];
+
+	Vec3d correctDir;
+	correctDir.x() = xys[27].x() - xys[30].x();
+	correctDir.y() = 0;
+	correctDir.z() = xys[27].y() - xys[30].y();
 
 	if (lineDir * correctDir < 0)
 	{
