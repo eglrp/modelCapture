@@ -195,6 +195,7 @@
     <ClInclude Include="IDrawer.h" />
     <ClInclude Include="modelCapture.h" />
     <ClInclude Include="modelCaptureDlg.h" />
+    <ClInclude Include="NoLeakPixelBufWin32.h" />
     <ClInclude Include="opencvApi.h" />
     <ClInclude Include="PickHandler.h" />
     <ClInclude Include="qcomm.h" />
@@ -211,6 +212,7 @@
     <ClCompile Include="IDrawer.cpp" />
     <ClCompile Include="modelCapture.cpp" />
     <ClCompile Include="modelCaptureDlg.cpp" />
+    <ClCompile Include="NoLeakPixelBufWin32.cpp" />
     <ClCompile Include="opencvApi.cpp" />
     <ClCompile Include="PickHandler.cpp" />
     <ClCompile Include="qcomm.cpp" />

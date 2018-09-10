@@ -43,6 +43,7 @@
 #include "PickHandler.h"
 #include "IDrawer.h"
 #include "SnapPara.h"
+#include "NoLeakPixelBufWin32.h"
 
 using namespace std;
 using namespace osg;
@@ -262,7 +263,7 @@ void CCapture::autoCaptureImage(osg::ref_ptr<osg::Node> loadedModel, std::string
 			traits->height = screenCaptureHeight;
 			traits->pbuffer = true;
 		}
-		ref_ptr<GraphicsContext> pbuffer = GraphicsContext::createGraphicsContext(traits.get());
+		ref_ptr<GraphicsContext> pbuffer = new osgViewer::CNoLeakPixelBufWin32(traits.get());
 		if (pbuffer.valid())
 		{
 			notify(NOTICE) << "Pixel buffer has been created successfully." << std::endl;
