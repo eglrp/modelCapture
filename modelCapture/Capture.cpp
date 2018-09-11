@@ -44,6 +44,7 @@
 #include "IDrawer.h"
 #include "SnapPara.h"
 #include "NoLeakPixelBufWin32.h"
+#include "qcomm.h"
 
 using namespace std;
 using namespace osg;
@@ -144,6 +145,13 @@ public:
 		{
 			std::cout << "Writing to: " << _fileName << std::endl;
 			writeImageFile(*_image, _fileName);
+
+			int imageWidth = _image->s();
+			int imageHeight = _image->t();
+
+			char strMsg[MAX_PATH];
+			sprintf_s(strMsg, "width: %d height: %d fileName: %s\n", imageWidth, imageHeight, _fileName.c_str());
+			_logop(strMsg);
 		}
 	}
 
@@ -242,22 +250,7 @@ void CCapture::autoCaptureImage(osg::ref_ptr<osg::Node> loadedModel, std::string
 		DisplaySettings* ds = DisplaySettings::instance().get();
 		ref_ptr<GraphicsContext::Traits> traits = new GraphicsContext::Traits(ds);
 
-		if (viewer.getCamera()->getGraphicsContext() && viewer.getCamera()->getGraphicsContext()->getTraits()) {
-			//use viewer settings for window size
-			ref_ptr<const GraphicsContext::Traits> src_traits = viewer.getCamera()->getGraphicsContext()->getTraits();
-			traits->screenNum = src_traits->screenNum;
-			traits->displayNum = src_traits->displayNum;
-			traits->hostName = src_traits->hostName;
-			traits->width = src_traits->width;
-			traits->height = src_traits->height;
-			traits->red = src_traits->red;
-			traits->green = src_traits->green;
-			traits->blue = src_traits->blue;
-			traits->alpha = src_traits->alpha;
-			traits->depth = src_traits->depth;
-			traits->pbuffer = true;
-		}
-		else {
+		{
 			//viewer would use fullscreen size (unknown here) pbuffer will use 4096 x4096 (or best avaiable)
 			traits->width = screenCaptureWidth;
 			traits->height = screenCaptureHeight;
@@ -270,6 +263,11 @@ void CCapture::autoCaptureImage(osg::ref_ptr<osg::Node> loadedModel, std::string
 			ref_ptr<Camera> camera = new Camera(*viewer.getCamera());
 			camera->setGraphicsContext(pbuffer.get());
 			camera->setViewport(new Viewport(0, 0, traits->width, traits->height));
+
+			char strMsg[MAX_PATH];
+			sprintf_s(strMsg, "viewport: width: %d height: %d\n", traits->width, traits->height);
+			_logop(strMsg);
+
 			GLenum buffer = pbuffer->getTraits()->doubleBuffer ? GL_BACK : GL_FRONT;
 			camera->setDrawBuffer(buffer);
 			camera->setReadBuffer(buffer);
@@ -278,6 +276,7 @@ void CCapture::autoCaptureImage(osg::ref_ptr<osg::Node> loadedModel, std::string
 		else
 		{
 			notify(NOTICE) << "Pixel buffer has not been created successfully." << std::endl;
+			_logop("Pixel buffer has not been created successfully.");
 		}
 	}
 

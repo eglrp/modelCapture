@@ -358,7 +358,7 @@ void CmodelCaptureDlg::startSnapImage(bool bDetach)
 		std::vector<threadPara> vecPara;
 	};
 
-	const int threadMax = std::thread::hardware_concurrency() - 1;
+	const int threadMax = 1;
 
 	vector<threadFunc> thr;
 	thr.resize(threadMax);
